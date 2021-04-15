@@ -2,6 +2,7 @@
 This file defines cache, session, and translator T object for the app
 These are fixtures that every app needs so probably you will not be editing this file
 """
+import copy
 import os
 import sys
 import logging
@@ -11,6 +12,7 @@ from py4web.utils.auth import Auth
 from py4web.utils.downloader import downloader
 from py4web.utils.tags import Tags
 from py4web.utils.factories import ActionFactory
+from py4web.utils.form import FormStyleBulma
 from . import settings
 
 # #######################################################
@@ -78,14 +80,35 @@ elif settings.SESSION_TYPE == "database":
 # #######################################################
 # Instantiate the object and actions that handle auth
 # #######################################################
+
 auth = Auth(session, db, define_tables=False)
-auth.use_username = True
-auth.param.registration_requires_confirmation = settings.VERIFY_EMAIL
-auth.param.registration_requires_approval = settings.REQUIRES_APPROVAL
+
+# Fixes the messages.
+auth_messages = copy.deepcopy(auth.MESSAGES)
+auth_messages['buttons']['sign-in'] = "Log in"
+auth_messages['buttons']['sign-up'] = "Sign up"
+auth_messages['buttons']['lost-password'] = "Lost password"
+
+# And button classes.
+auth_button_classes = {
+    "lost-password": "button is-danger is-light",
+    "register": "button is-info is-light",
+    "request": "button is-primary",
+    "sign-in": "button is-primary",
+    "sign-up": "button is-success",
+    "submit": "button is-primary",
+}
+
+auth.use_username = False
+auth.param.button_classes = auth_button_classes
+auth.param.registration_requires_confirmation = False
+auth.param.registration_requires_approval = False
 auth.param.allowed_actions = settings.ALLOWED_ACTIONS
 auth.param.login_expiration_time = 3600
-auth.param.password_complexity = {"entropy": 50}
+# FIXME: Readd for production.
+auth.param.password_complexity = {"entropy": 2}
 auth.param.block_previous_password_num = 3
+auth.param.formstyle = FormStyleBulma
 auth.define_tables()
 
 # #######################################################
@@ -156,10 +179,10 @@ if settings.OAUTH2OKTA_CLIENT_ID:
 # files uploaded and reference by Field(type='upload')
 # #######################################################
 if settings.UPLOAD_FOLDER:
-    @action('download/<filename>')                                                   
-    @action.uses(db)                                                                                           
+    @action('download/<filename>')
+    @action.uses(db)
     def download(filename):
-        return downloader(db, settings.UPLOAD_FOLDER, filename) 
+        return downloader(db, settings.UPLOAD_FOLDER, filename)
     # To take advantage of this in Form(s)
     # for every field of type upload you MUST specify:
     #
