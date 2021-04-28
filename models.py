@@ -8,8 +8,7 @@ from pydal.validators import *
 
 def get_user_email():
     return auth.current_user.get('email') if auth.current_user else None
-
-
+    
 db.define_table(
     'recipes',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
@@ -58,5 +57,8 @@ db.define_table(  # List of Substitutions for ingredients
     Field('original_ingredient', 'reference ingredients'),
 
 )
+
+def get_time():
+    return datetime.datetime.utcnow()
 
 db.commit()
