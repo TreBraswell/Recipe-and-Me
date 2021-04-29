@@ -35,8 +35,21 @@ from .common import db, session, T, cache, auth, logger, authenticated, unauthen
 url_signer = URLSigner(session)
 
 
-@action('index')
+@action('index') # aka Discover
 @action.uses(db, auth, 'index.html')
 def index():
-
     return dict()
+
+#
+@action('profile/<user_id:int>')
+@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html')
+def profile(user_id=None):
+    assert user_id is not None
+    return dict()
+
+
+@action('recipe/<recipe_id:int>')
+@action.uses(db, session, auth.user, url_signer.verify(), 'recipe.html')
+def recipe(recipe_id=None):
+    return dict()
+
