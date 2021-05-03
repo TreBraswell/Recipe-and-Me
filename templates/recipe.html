@@ -10,8 +10,17 @@
    <title>Recipes</title>
 </head>
 
-<div class="section mx-6">
-   [[=s]]
-</div>
+
+   <div class="box">
+      [[for row in rows:]]
+      <div class="box">
+         [[=row.name]]
+         [[=row.avg_price]]
+      </div>
+      [[pass]]
+      <a class="button is-primary" href="[[=URL('add_ingredient')]]">Add Ingredient</a>
+
+    </div>
+
 
 </html>

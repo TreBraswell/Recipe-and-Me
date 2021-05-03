@@ -51,5 +51,28 @@ def profile(user_id=None):
 @action('recipe/<recipe_id:int>')
 @action.uses(db, session, auth.user, url_signer.verify(), 'recipe.html')
 def recipe(recipe_id=None):
-    return dict()
+    rows =  = db(db.ingredients.recipe_id == recipe_id).select()
+    return dict(rows =rows)
+
+
+@action('add_ingredient/<recipe_id>', method=["GET", "POST"])
+@action.uses(db, session, auth.user,url_signer.verify(), 'add_ingredient.html')
+def add_ingredient(recipe_id =None):
+    assert recipe_id is not None
+    # Insert form: no record= in it.
+    form = Form([Field('name', requires=IS_NOT_EMPTY()), Field('avg_price', requires=IS_NOT_EMPTY())], csrf_session=session,
+            formstyle=FormStyleBulma)
+    #mycontact = db(db.contact.id ==contact_id).select().first()
+    
+    if form.accepted:
+        db.ingredients.insert(
+        name = form.vars['name'],
+        avg_price = form.vars['avg_price'],
+        recipe_id = recipe_id
+        )
+        # We simply redirect; the insertion already happened.
+        redirect(URL('recipe',recipe_id, signer=url_signer))
+        #redirect(URL('edit_phones',contact_id , url_signer))
+    # Either this is a GET request, or this is a POST but not accepted = with errors.
+    return dict(form=form, url_signer=url_signer)
 

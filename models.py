@@ -29,7 +29,7 @@ db.define_table(
 db.define_table(
     'recipe_ingredients',
     Field('recipe', 'reference recipes'),
-    Field('ingredient_list', 'reference recipe_ingredients'),
+    Field(' ingredient', 'reference ingredients'),
     Field('quantity', 'string')
 )
 
@@ -43,6 +43,7 @@ db.define_table(
 db.define_table(
     'ingredients',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
+    Field('recipe_id', 'reference recipes'),
     Field('avg_price', 'integer')
 )
 
