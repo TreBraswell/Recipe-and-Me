@@ -38,7 +38,33 @@ url_signer = URLSigner(session)
 @action('index') # aka Discover
 @action.uses(db, auth, 'index.html')
 def index():
-    return dict()
+    rows = db(db.recipes.shared == True).select().as_list()
+    for row in rows:
+        # create ingredients string
+        ingredient_rows = db((db.recipe_ingredients.recipe == row['id'])).select()
+        s = ''
+        if ingredient_rows:
+            row0 = ingredient_rows[0]
+            ingredient_name = db.ingredients[row0['ingredient']].name
+            s = ingredient_name
+            for ingredient_row in ingredient_rows[1:]:
+                    ingredient_name = db.ingredients[ingredient_row['ingredient']].name
+                    s += f', {ingredient_name}'
+        row["ingredients"] = s
+
+        # create tags string
+        tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
+        s = ''
+        if tag_rows:
+            row0 = tag_rows[0]
+            tag_name = db.tags[row0['tag']].name
+            s = tag_name
+            for tag_row in tag_rows[1:]:
+                    tag_name = db.tags[tag_row['tag']].name
+                    s += f', {tag_name}'
+        row["tags"] = s
+
+    return dict(rows=rows)
 
 #
 @action('profile/<user_id:int>')

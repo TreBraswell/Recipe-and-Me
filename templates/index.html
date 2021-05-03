@@ -11,7 +11,28 @@
 </head>
 
 <div class="section mx-6">
-   [[=s]]
+   <h1 class="title">Recipe and Me — Discover</h1>
+   
+   <div class="container">
+      <table class="table is-striped is-fullwidth has-text-left">
+         <tr>
+            <th>Recipe Name</th>
+            <th>Steps</th>
+            <th>Cook Time</th>
+            <th>Ingredients</th>
+            <th>Tags</th>
+         </tr>
+         [[for row in rows:]]
+         <tr>
+            <td>[[=row['name'] ]]</td>
+            <td>[[=row['steps'] ]]</td>
+            <td>[[=row['cook_time'] ]]</td>
+            <td>[[=row['ingredients'] ]]</td>
+            <td>[[=row['tags'] ]]</td>
+         </tr>
+         [[pass]]
+      </table>
+   </div>
 </div>
 
 </html>
