@@ -72,26 +72,23 @@ def index():
 @action.uses(db, session, auth.user, url_signer.verify(), 'profile.html', 'layout.html')
 def profile():
     user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
-    db.auth_user.email.readable = db.auth_user.email.writable = False
-    db.auth_user.id.readable = db.auth_user.id.writable = False
-    # form = Form(
-    #     [Field('first_name', 'string', requires=IS_NOT_EMPTY(
-    #         error_message="First name required")),
-    #     Field('last_name', 'string', requires=IS_NOT_EMPTY(
-    #         error_message="Last name required"))],
-    #     record=user,
-    #     csrf_session=session,
-    #     deletable=False,
-    #     formstyle=FormStyleBulma
-    # )
-    form=Form(db.auth_user, record=user, deletable=False,
-                csrf_seesion=session, formstyle=FormStyleBulma)
+    form = Form(
+        [Field('first_name', 'string', requires=IS_NOT_EMPTY(
+            error_message="First name required")),
+         Field('last_name', 'string', requires=IS_NOT_EMPTY(
+             error_message="Last name required"))],
+        record=user,
+        csrf_session=session,
+        deletable=False,
+        formstyle=FormStyleBulma
+    )
+    
     if form.accepted:
-        # db.auth_user.update(
-        #     email=get_user_email(),
-        #     first_name=form.vars['first_name'],
-        #     last_name=form.vars['last_name']
-        # )
+        row = db(db.auth_user.email == get_user_email()).select().first()
+        row.update_record(
+            first_name=form.vars['first_name'],
+            last_name=form.vars['last_name']
+        )
         redirect(URL('profile', signer=url_signer))
 
     return dict(
