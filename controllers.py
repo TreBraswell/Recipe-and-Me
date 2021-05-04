@@ -34,7 +34,6 @@ from py4web import action, request, abort, redirect, URL
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
 url_signer = URLSigner(session)
 
-
 @action('index')  # aka Discover
 @action.uses(db, auth, 'index.html', 'layout.html')
 def index():
@@ -125,4 +124,3 @@ def add_ingredient(recipe_id =None):
         #redirect(URL('edit_phones',contact_id , url_signer))
     # Either this is a GET request, or this is a POST but not accepted = with errors.
     return dict(form=form, url_signer=url_signer)
-

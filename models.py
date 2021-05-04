@@ -51,7 +51,7 @@ db.define_table(
     'ingredients',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
     Field('recipe_id', 'reference recipes'),
-    Field('avg_price', 'integer')
+    Field('avg_price', 'integer'),
     Field('allergen', 'reference ingredients')
 )
 
@@ -72,5 +72,4 @@ db.define_table(  # List of Substitutions for ingredients
     Field('sub_ingredient', 'reference ingredients'),
     Field('sub_rate', 'integer', requires=IS_INT_IN_RANGE(1, 6))
 )
-
 db.commit()
