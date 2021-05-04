@@ -20,6 +20,8 @@ db.define_table(
     Field('name', 'string', requires=IS_NOT_EMPTY()),
     Field('steps', 'string'),
     Field('cook_time', 'integer'),
+    Field('rating', 'float', default=0.00),
+    Field('num_ratings', 'integer', default=0),
     Field('m_datetime', 'datetime', requires=[IS_DATETIME(), IS_NOT_EMPTY()],
           readable=False, writable=False),
     Field('m_email', 'string', default=get_user_email,
@@ -62,7 +64,7 @@ db.define_table(  # List of all tags for ALL recipes
 db.define_table(
     'recipe_tags',
     Field('recipe', 'reference recipes'),
-    Field('tag', 'reference tags') # one tag for one corresponding recipe
+    Field('tag', 'reference tags')  # one tag for one corresponding recipe
 )
 
 db.define_table(  # List of Substitutions for ingredients
