@@ -35,21 +35,22 @@ from .common import db, session, T, cache, auth, logger, authenticated, unauthen
 url_signer = URLSigner(session)
 
 
-@action('index') # aka Discover
-@action.uses(db, auth, 'index.html')
+@action('index')  # aka Discover
+@action.uses(db, auth, 'index.html', 'layout.html')
 def index():
     rows = db(db.recipes.shared == True).select().as_list()
     for row in rows:
         # create ingredients string
-        ingredient_rows = db((db.recipe_ingredients.recipe == row['id'])).select()
+        ingredient_rows = db(
+            (db.recipe_ingredients.recipe == row['id'])).select()
         s = ''
         if ingredient_rows:
             row0 = ingredient_rows[0]
             ingredient_name = db.ingredients[row0['ingredient']].name
             s = ingredient_name
             for ingredient_row in ingredient_rows[1:]:
-                    ingredient_name = db.ingredients[ingredient_row['ingredient']].name
-                    s += f', {ingredient_name}'
+                ingredient_name = db.ingredients[ingredient_row['ingredient']].name
+                s += f', {ingredient_name}'
         row["ingredients"] = s
 
         # create tags string
@@ -60,22 +61,47 @@ def index():
             tag_name = db.tags[row0['tag']].name
             s = tag_name
             for tag_row in tag_rows[1:]:
-                    tag_name = db.tags[tag_row['tag']].name
-                    s += f', {tag_name}'
+                tag_name = db.tags[tag_row['tag']].name
+                s += f', {tag_name}'
         row["tags"] = s
 
-    return dict(rows=rows)
+    return dict(rows=rows, url_signer=url_signer)
 
-#
-@action('profile/<user_id:int>')
-@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html')
-def profile(user_id=None):
-    assert user_id is not None
-    return dict()
+
+@action('profile', method=["GET", "POST"])
+@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html', 'layout.html')
+def profile():
+    user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
+    db.auth_user.email.readable = db.auth_user.email.writable = False
+    db.auth_user.id.readable = db.auth_user.id.writable = False
+    # form = Form(
+    #     [Field('first_name', 'string', requires=IS_NOT_EMPTY(
+    #         error_message="First name required")),
+    #     Field('last_name', 'string', requires=IS_NOT_EMPTY(
+    #         error_message="Last name required"))],
+    #     record=user,
+    #     csrf_session=session,
+    #     deletable=False,
+    #     formstyle=FormStyleBulma
+    # )
+    form=Form(db.auth_user, record=user, deletable=False,
+                csrf_seesion=session, formstyle=FormStyleBulma)
+    if form.accepted:
+        # db.auth_user.update(
+        #     email=get_user_email(),
+        #     first_name=form.vars['first_name'],
+        #     last_name=form.vars['last_name']
+        # )
+        redirect(URL('profile', signer=url_signer))
+
+    return dict(
+        name=f"{user['first_name']} {user['last_name']}",
+        url_signer=url_signer,
+        form=form
+    )
 
 
 @action('recipe/<recipe_id:int>')
 @action.uses(db, session, auth.user, url_signer.verify(), 'recipe.html')
 def recipe(recipe_id=None):
     return dict()
-

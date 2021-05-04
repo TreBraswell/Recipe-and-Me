@@ -14,6 +14,7 @@
 </head>
 
 <body>
+
   <!-- Navigation bar -->
   <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
@@ -42,13 +43,13 @@
             [[if globals().get('user'):]]
             <div class="navbar-item has-dropdown is-hoverable">
               <a class="navbar-link is-primary">
-                [[=globals().get('user').get('email')]]
+                [[=globals().get('user').get('first_name')]]
+                [[=globals().get('user').get('last_name')]]
               </a>
               <div class="navbar-dropdown">
+                <a class="navbar-item" href="[[=URL('index')]]">Home</a>
                 <a class="navbar-item" href="[[=URL('auth/logout')]]">Logout</a>
-                <a class="navbar-item" href="[[=URL('auth/profile')]]">Profile</a>
-                <a class="navbar-item" href="[[=URL('auth/change_password')]]">Change Password</a></li>
-
+                <a class="navbar-item" href="[[=URL('profile', signer=url_signer)]]">My Profile</a>
               </div>
             </div>
             [[else:]]
