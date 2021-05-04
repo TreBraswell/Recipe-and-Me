@@ -28,6 +28,13 @@ db.define_table(
 )
 
 db.define_table(
+    'saved_recipes',
+    Field('recipe', 'reference recipes'),
+    Field('m_email', default=get_user_email, readable=False, writable=False),
+    Field('starred', 'boolean')
+)
+
+db.define_table(
     'ingredients',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
     Field('avg_price', 'integer')

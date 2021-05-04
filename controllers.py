@@ -82,7 +82,7 @@ def profile():
         deletable=False,
         formstyle=FormStyleBulma
     )
-    
+
     if form.accepted:
         row = db(db.auth_user.email == get_user_email()).select().first()
         row.update_record(
