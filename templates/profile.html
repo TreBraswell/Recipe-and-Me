@@ -8,10 +8,23 @@
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>Profile</title>
+   <h1 class="title has-text-centered"><br>[[=name]]'s Profile</h1>
 </head>
 
 <div class="section mx-6">
-   [[=s]]
+   <div class="tile is-ancestor">
+      <div class="tile is-5 is-parent">
+         <div class="tile is-child box section">
+            <h1 class="subtitle">About Me</h1>
+            [[=form]]
+         </div>
+      </div>
+      <div class="tile is-parent">
+         <div class="tile is-child box section">
+            <h1 class="subtitle">My Recipes</h1>
+         </div>
+      </div>
+   </div>
 </div>
 
 </html>

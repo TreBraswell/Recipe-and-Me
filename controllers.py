@@ -35,17 +35,67 @@ from .common import db, session, T, cache, auth, logger, authenticated, unauthen
 url_signer = URLSigner(session)
 
 
-@action('index') # aka Discover
-@action.uses(db, auth, 'index.html')
+@action('index')  # aka Discover
+@action.uses(db, auth, 'index.html', 'layout.html')
 def index():
-    return dict()
+    rows = db(db.recipes.shared == True).select().as_list()
+    for row in rows:
+        # create ingredients string
+        ingredient_rows = db(
+            (db.recipe_ingredients.recipe == row['id'])).select()
+        s = ''
+        if ingredient_rows:
+            row0 = ingredient_rows[0]
+            ingredient_name = db.ingredients[row0['ingredient']].name
+            s = ingredient_name
+            for ingredient_row in ingredient_rows[1:]:
+                ingredient_name = db.ingredients[ingredient_row['ingredient']].name
+                s += f', {ingredient_name}'
+        row["ingredients"] = s
 
-#
-@action('profile/<user_id:int>')
-@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html')
-def profile(user_id=None):
-    assert user_id is not None
-    return dict()
+        # create tags string
+        tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
+        s = ''
+        if tag_rows:
+            row0 = tag_rows[0]
+            tag_name = db.tags[row0['tag']].name
+            s = tag_name
+            for tag_row in tag_rows[1:]:
+                tag_name = db.tags[tag_row['tag']].name
+                s += f', {tag_name}'
+        row["tags"] = s
+
+    return dict(rows=rows, url_signer=url_signer)
+
+
+@action('profile', method=["GET", "POST"])
+@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html', 'layout.html')
+def profile():
+    user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
+    form = Form(
+        [Field('first_name', 'string', requires=IS_NOT_EMPTY(
+            error_message="First name required")),
+         Field('last_name', 'string', requires=IS_NOT_EMPTY(
+             error_message="Last name required"))],
+        record=user,
+        csrf_session=session,
+        deletable=False,
+        formstyle=FormStyleBulma
+    )
+    
+    if form.accepted:
+        row = db(db.auth_user.email == get_user_email()).select().first()
+        row.update_record(
+            first_name=form.vars['first_name'],
+            last_name=form.vars['last_name']
+        )
+        redirect(URL('profile', signer=url_signer))
+
+    return dict(
+        name=f"{user['first_name']} {user['last_name']}",
+        url_signer=url_signer,
+        form=form
+    )
 
 
 @action('recipe/<recipe_id:int>')
