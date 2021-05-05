@@ -71,7 +71,9 @@ def index():
 @action('profile', method=["GET", "POST"])
 @action.uses(db, session, auth.user, url_signer.verify(), 'profile.html', 'layout.html')
 def profile():
+
     user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
+    myrecipes = db(db.recipes.m_email == get_user_email()).select()
     form = Form(
         [Field('first_name', 'string', requires=IS_NOT_EMPTY(
             error_message="First name required")),
@@ -94,11 +96,71 @@ def profile():
     return dict(
         name=f"{user['first_name']} {user['last_name']}",
         url_signer=url_signer,
-        form=form
+        form=form,
+        myrecipes = myrecipes
     )
+@action('add_recipe', method=["GET", "POST"])
+@action.uses(db, session, auth.user,  url_signer.verify(),'add_recipe.html')
+def add_recipe():
+    # Insert form: no record= in it.
+    form = Form(db.recipes, csrf_session=session, formstyle=FormStyleBulma)
+    if form.accepted:
+        # We simply redirect; the insertion already happened.
+        redirect(URL('profile', signer=url_signer))
+    # Either this is a GET request, or this is a POST but not accepted = with errors.
+    return dict(form=form,url_signer=url_signer)
+
+@action('edit_recipe/<recipe_id>', method=["GET", "POST"])
+@action.uses(db, session, auth.user, url_signer.verify(), 'edit_recipe.html')
+def edit_recipe(recipe_id=None):
+    assert recipe_id is not None
+
+    # We read the product being edited from the db.
+    # p = db(db.product.id == contact_id).select().first()
+    p = db.recipes[recipe_id]
+    if p is None:
+        # Nothing found to be edited!
+       redirect(URL('profile', signer=url_signer))
+    # Edit form: it has record=
+    form = Form(db.recipes, record=p, deletable=False, csrf_session=session, formstyle=FormStyleBulma)
+    if form.accepted:
+        # The update already happened!
+        redirect(URL('profile', signer=url_signer))
+    return dict(form=form, url_signer=url_signer)
+
+@action('delete_recipe/<recipe_id>')
+@action.uses(db, session, auth.user, url_signer.verify())
+def delete_recipe(recipe_id=None):
+    assert recipe_id is not None
+    db(db.ingredients.recipe_id == recipe_id).delete()
+    db(db.recipes.id == recipe_id).delete()
+    redirect(URL('profile', signer=url_signer))
+
+@action('edit_ingredient/<recipe_id>')
+@action.uses(db, session, auth.user, url_signer.verify(), 'edit_ingredient.html')
+def edit_ingredient(recipe_id =None):
+    assert recipe_id is not None
+    rows  = db(db.ingredients.recipe_id == recipe_id).select()
+    return dict(rows =rows,url_signer=url_signer,myid = recipe_id)
 
 
-@action('recipe/<recipe_id:int>')
-@action.uses(db, session, auth.user, url_signer.verify(), 'recipe.html')
-def recipe(recipe_id=None):
-    return dict()
+@action('add_ingredient/<recipe_id>', method=["GET", "POST"])
+@action.uses(db, session, auth.user,url_signer.verify(), 'add_ingredient.html')
+def add_ingredient(recipe_id =None):
+    assert recipe_id is not None
+    # Insert form: no record= in it.
+    form = Form([Field('name', requires=IS_NOT_EMPTY()), Field('avg_price', requires=IS_NOT_EMPTY())], csrf_session=session,
+            formstyle=FormStyleBulma)
+    #mycontact = db(db.contact.id ==contact_id).select().first()
+    
+    if form.accepted:
+        db.ingredients.insert(
+        name = form.vars['name'],
+        avg_price = form.vars['avg_price'],
+        recipe_id = recipe_id
+        )
+        # We simply redirect; the insertion already happened.
+        redirect(URL('edit_ingredient',recipe_id, signer=url_signer))
+        #redirect(URL('edit_phones',contact_id , url_signer))
+    # Either this is a GET request, or this is a POST but not accepted = with errors.
+    return dict(form=form, url_signer=url_signer)

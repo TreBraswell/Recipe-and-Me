@@ -1,0 +1,27 @@
+[[extend 'layout.html']]
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta http-equiv="X-UA-Compatible" content="IE=edge">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Recipes</title>
+</head>
+
+
+   <div class="box">
+      [[for row in rows:]]
+      <div class="box">
+         [[=row.name]]
+         [[=row.avg_price]]
+      </div>
+      [[pass]]
+      <a class="button is-primary" href="[[=URL('add_ingredient',myid,signer=url_signer)]]">Add Ingredient</a>
+      <a class="button is-primary" href="[[=URL('profile',signer=url_signer)]]">Go back</a>
+
+    </div>
+
+
+</html>

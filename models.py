@@ -39,7 +39,8 @@ db.define_table(
 db.define_table(
     'ingredients',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
-    Field('avg_price', 'integer')
+    Field('avg_price', 'integer'),
+    Field('recipe_id','reference recipes')
 )
 
 db.define_table(

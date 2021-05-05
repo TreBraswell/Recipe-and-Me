@@ -22,6 +22,25 @@
       <div class="tile is-parent">
          <div class="tile is-child box section">
             <h1 class="subtitle">My Recipes</h1>
+            [[for row in myrecipes:]]
+            <div class="box">
+               name: [[=row.name]]
+                <a class="button is-warning" href="[[=URL('edit_recipe', row['id'], signer=url_signer)]]">
+                  <span class="icon"><i class="fa fa-fw fa-edit"></i>edit recipe</span> 
+                </a>
+                <a class="button is-danger" href="[[=URL('delete_recipe', row['id'], signer=url_signer)]]">
+                  <span class="icon"><i class="fa fa-fw fa-trash"></i>delete recipe</span> 
+                </a>
+                <a class="button is-warning" href="[[=URL('edit_ingredient', row['id'], signer=url_signer)]]">
+                  <span class="icon"><i class="fa fa-fw fa-edit"></i>edit ingredients</span> 
+                </a>
+            </div>
+              
+              
+            [[pass]]
+            <a class="button is-warning" href="[[=URL('add_recipe', signer=url_signer)]]">
+               <span class="icon"><i class="fa fa-fw fa-edit"></i>add a recipe</span> 
+             </a>
          </div>
       </div>
    </div>
