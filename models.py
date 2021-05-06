@@ -22,7 +22,7 @@ db.define_table(
     Field('cook_time', 'integer'),
     Field('rating', 'float', default=0.00),
     Field('num_ratings', 'integer', default=0),
-    Field('m_datetime', 'datetime', requires=[IS_DATETIME(), IS_NOT_EMPTY()],
+    Field('m_datetime', 'datetime', default=get_time(), requires=[IS_DATETIME(), IS_NOT_EMPTY()],
           readable=False, writable=False),
     Field('m_email', 'string', default=get_user_email,
           readable=False, writable=False),

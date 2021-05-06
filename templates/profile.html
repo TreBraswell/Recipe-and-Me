@@ -24,22 +24,23 @@
             <h1 class="subtitle">My Recipes</h1>
             [[for row in myrecipes:]]
             <div class="box">
-               name: [[=row.name]]
+               [[=row.name]]
+               <br>
                 <a class="button is-warning" href="[[=URL('edit_recipe', row['id'], signer=url_signer)]]">
-                  <span class="icon"><i class="fa fa-fw fa-edit"></i>edit recipe</span> 
-                </a>
-                <a class="button is-danger" href="[[=URL('delete_recipe', row['id'], signer=url_signer)]]">
-                  <span class="icon"><i class="fa fa-fw fa-trash"></i>delete recipe</span> 
+                  <span class="icon"><i class="fa fa-fw fa-edit"></i></span><span>Edit Recipe</span>
                 </a>
                 <a class="button is-warning" href="[[=URL('edit_ingredient', row['id'], signer=url_signer)]]">
-                  <span class="icon"><i class="fa fa-fw fa-edit"></i>edit ingredients</span> 
+                  <span class="icon"><i class="fa fa-fw fa-edit"></i></span><span>Edit Ingredients</span>
+                </a>
+                <a class="button is-danger" href="[[=URL('delete_recipe', row['id'], signer=url_signer)]]">
+                  <span class="icon"><i class="fa fa-fw fa-trash"></i></span><span>Delete</span>
                 </a>
             </div>
               
               
             [[pass]]
-            <a class="button is-warning" href="[[=URL('add_recipe', signer=url_signer)]]">
-               <span class="icon"><i class="fa fa-fw fa-edit"></i>add a recipe</span> 
+            <a class="button is-warning is-pulled-right mt-6" href="[[=URL('add_recipe', signer=url_signer)]]">
+               <span class="icon"><i class="fa fa-fw fa-edit"></i></span><span>Upload a Recipe</span>
              </a>
          </div>
       </div>

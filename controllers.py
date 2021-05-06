@@ -69,7 +69,7 @@ def index():
 
 
 @action('profile', method=["GET", "POST"])
-@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html', 'layout.html')
+@action.uses(db, session, auth.user, url_signer.verify(), 'profile.html', 'layout.html', 'auth.html')
 def profile():
 
     user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
