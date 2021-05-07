@@ -35,14 +35,14 @@ db.define_table(
     Field('m_email', default=get_user_email, readable=False, writable=False),
     Field('starred', 'boolean')
 )
-
+#list of all ingredients
 db.define_table(
     'ingredients',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
     Field('avg_price', 'integer'),
     Field('recipe_id','reference recipes')
 )
-
+#list of ingredients that relate to a specifc recipe
 db.define_table(
     'recipe_ingredients',
     Field('recipe', 'reference recipes'),
