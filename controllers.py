@@ -46,13 +46,16 @@ def index():
         ingredient_rows = db(
             (db.recipe_ingredients.recipe == row['id'])).select()
         s = ''
+        row["ingredients_rows"] = []
         if ingredient_rows:
             row0 = ingredient_rows[0]
             ingredient_name = db.ingredients[row0['ingredient']].name
             s = ingredient_name
+            row["ingredients_rows"].append(ingredient_name)
             for ingredient_row in ingredient_rows[1:]:
                 ingredient_name = db.ingredients[ingredient_row['ingredient']].name
                 s += f', {ingredient_name}'
+                row["ingredients_rows"].append(ingredient_name)
         row["ingredients"] = s
 
         # create tags string
@@ -66,6 +69,7 @@ def index():
                 tag_name = db.tags[tag_row['tag']].name
                 s += f', {tag_name}'
         row["tags"] = s
+        row["tag_rows"] = tag_rows
 
     return dict(rows=rows, url_signer=url_signer)
 
