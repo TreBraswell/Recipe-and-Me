@@ -24,6 +24,8 @@ The path follows the bottlepy syntax.
 session, db, T, auth, and tempates are examples of Fixtures.
 Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app will result in undefined behavior
 """
+import time
+
 from yatl.helpers import A
 from .models import get_user_email
 
@@ -97,10 +99,55 @@ def profile():
         name=f"{user['first_name']} {user['last_name']}",
         url_signer=url_signer,
         form=form,
-        myrecipes=myrecipes
+        myrecipes = myrecipes,
+        load_recipes_url = URL('load_recipes', signer=url_signer),
+        add_recipe_url = URL('add_recipe', signer=url_signer),
+        delete_recipe_url = URL('delete_recipe', signer=url_signer),
+        edit_recipe_url = URL('edit_recipe', signer=url_signer),
     )
 
 
+# This is our very first API function.
+@action('load_recipes')
+@action.uses(url_signer.verify(), db)
+def load_recipes():
+    rows = db(db.recipes.m_email == get_user_email()).select().as_list()
+    return dict(rows=rows)
+
+@action('add_recipe', method="POST")
+@action.uses(url_signer.verify(), db)
+def add_recipe():
+    id = db.recipes.insert(
+        name=request.json.get('first_name'),
+        steps=request.json.get('steps'),
+        cook_time=request.json.get('cook_time'),
+        add_rating=request.json.get('add_rating'),
+        add_shared=request.json.get('add_shared'),
+
+    )
+    return dict(id=id)
+
+@action('delete_recipe')
+@action.uses(url_signer.verify(), db)
+def delete_recipe():
+    id = request.params.get('id')
+    assert id is not None
+    db(db.recipes.id == id).delete()
+    return "ok"
+
+@action('edit_recipe', method="POST")
+@action.uses(url_signer.verify(), db)
+def edit_recipe():
+    # Updates the db record.
+    id = request.json.get("id")
+    field = request.json.get("field")
+    value = request.json.get("value")
+    db(db.recipes.id == id).update(**{field: value})
+    time.sleep(1) # debugging
+    return "ok"
+
+
+"""
 @action('add_recipe', method=["GET", "POST"])
 @action.uses(db, session, auth.user, 'add_recipe.html')
 def add_recipe():
@@ -119,7 +166,7 @@ def edit_recipe(recipe_id=None):
     assert recipe_id is not None
 
     # We read the product being edited from the db.
-    # p = db(db.product.id == contact_id).select().first()
+    # p = db(db.product.id == recipe_id).select().first()
     p = db.recipes[recipe_id]
     if p is None:
         # Nothing found to be edited!
@@ -156,8 +203,8 @@ def add_ingredient(recipe_id=None):
     assert recipe_id is not None
     # Insert form: no record= in it.
     form = Form([Field('name', requires=IS_NOT_EMPTY()), Field('avg_price', requires=IS_NOT_EMPTY())], csrf_session=session,
-                formstyle=FormStyleBulma)
-    #mycontact = db(db.contact.id ==contact_id).select().first()
+            formstyle=FormStyleBulma)
+    #myrecipe = db(db.recipe.id ==recipe_id).select().first()
 
     if form.accepted:
         db.ingredients.insert(
@@ -166,7 +213,8 @@ def add_ingredient(recipe_id=None):
             recipe_id=recipe_id
         )
         # We simply redirect; the insertion already happened.
-        redirect(URL('edit_ingredient', recipe_id, signer=url_signer))
-        #redirect(URL('edit_phones',contact_id , url_signer))
+        redirect(URL('edit_ingredient',recipe_id, signer=url_signer))
+        #redirect(URL('edit_phones',recipe_id , url_signer))
     # Either this is a GET request, or this is a POST but not accepted = with errors.
     return dict(form=form, url_signer=url_signer)
+"""
