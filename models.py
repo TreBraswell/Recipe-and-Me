@@ -40,7 +40,6 @@ db.define_table(
     'ingredients',
     Field('name', 'string', requires=IS_NOT_EMPTY()),
     Field('avg_price', 'integer'),
-    Field('recipe_id','reference recipes')
 )
 #list of ingredients that relate to a specifc recipe
 db.define_table(

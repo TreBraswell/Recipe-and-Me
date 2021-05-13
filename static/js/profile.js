@@ -13,7 +13,6 @@ let init = (app) => {
         add_name: "",
         add_steps: "",
         add_cook_time: 0,
-        add_rating: 0,
         add_shared: false,
         rows: [],
     };
@@ -31,7 +30,7 @@ let init = (app) => {
     // - edit : the value is being edited
     // - pending : a save is pending.
     app.decorate = (a) => {
-        a.map((e) => {e._state = {name: "clean", steps: "clean",cook_time:"clean",rating: "clean",shared: "clean"} ;});
+        a.map((e) => {e._state = {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"} ;});
         return a;
     }
 
@@ -41,7 +40,6 @@ let init = (app) => {
                 name: app.vue.add_name,
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
-                rating: app.vue.add_rating,
                 shared: app.vue.add_shared,
             }).then(function (response) {
             app.vue.rows.push({
@@ -49,9 +47,8 @@ let init = (app) => {
                 name: app.vue.add_name,
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
-                rating: app.vue.add_rating,
                 shared: app.vue.add_shared,
-                _state: {name: "clean", steps: "clean",cook_time:"clean",rating: "clean",shared: "clean"},
+                _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"},
             });
             app.enumerate(app.vue.rows);
             app.reset_form();
@@ -64,7 +61,6 @@ let init = (app) => {
         app.vue.add_name= "";
         app.vue.add_steps= "";
         app.vue.add_cook_time= 0;
-        app.vue.add_rating= 0;
         app.vue.add_shared= false;
     };
 

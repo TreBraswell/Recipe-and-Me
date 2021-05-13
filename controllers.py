@@ -122,12 +122,10 @@ def load_recipes():
 @action.uses(url_signer.verify(), db)
 def add_recipe():
     id = db.recipes.insert(
-        name=request.json.get('first_name'),
+        name=request.json.get('name'),
         steps=request.json.get('steps'),
         cook_time=request.json.get('cook_time'),
-        add_rating=request.json.get('add_rating'),
-        add_shared=request.json.get('add_shared'),
-
+        shared=request.json.get('shared'),
     )
     return dict(id=id)
 

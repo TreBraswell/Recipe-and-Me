@@ -39,12 +39,11 @@
                 <th>Name</th>
                 <th>Steps</th>
                 <th>Cook Time</th>
-                <th>Rating</th>
                 <th>Shared</th>
                 <th></th>
               </tr>
               <tr v-for="r in rows">
-                <td v-for="fn in ['name', 'steps','cook_time','rating','shared']">
+                <td v-for="fn in ['name', 'steps', 'cook_time', 'shared']">
                   <div class="control" :class="{'is-loading': r._state[fn] === 'pending'}">
                     <input type="text" class="input" v-model="r[fn]" :class="{
                            'is-focused': r._state[fn] === 'edit',
@@ -89,15 +88,9 @@
                 </div>
               </div>
               <div class="field">
-                <label class="label">Rating:</label>
-                <div class="control">
-                  <input type="text" v-model="add_rating" class="input">
-                </div>
-              </div>
-              <div class="field">
                 <label class="label">Shared:</label>
                 <div class="control">
-                  <input type="boolean" v-model="add_shared" class="input">
+                  <input type="checkbox" v-model="add_shared" class="checkbox">
                 </div>
               </div>
               <div class="field">
