@@ -26,6 +26,9 @@ Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app w
 """
 import time
 
+import uuid
+import random
+
 from yatl.helpers import A
 from .models import get_user_email
 
@@ -36,42 +39,28 @@ from py4web import action, request, abort, redirect, URL
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
 url_signer = URLSigner(session)
 
+@action('search_recipes')
+@action.uses(db)
+def search_recipes():
+    q = request.params.get("q")
+    results = [q + ":" + str(uuid.uuid1()) for _ in range(random.randint(2, 6))]
+    rows = get_shared_recipes(q)
+    return dict(results=results, rows=rows)
 
 @action('index')  # aka Discover
 @action.uses(db, auth, 'index.html', 'layout.html')
 def index():
-    rows = db(db.recipes.shared == True).select().as_list()
-    for row in rows:
-        # create ingredients string
-        ingredient_rows = db(
-            (db.recipe_ingredients.recipe == row['id'])).select()
-        s = ''
-        row["ingredients_rows"] = []
-        if ingredient_rows:
-            row0 = ingredient_rows[0]
-            ingredient_name = db.ingredients[row0['ingredient']].name
-            s = ingredient_name
-            row["ingredients_rows"].append(ingredient_name)
-            for ingredient_row in ingredient_rows[1:]:
-                ingredient_name = db.ingredients[ingredient_row['ingredient']].name
-                s += f', {ingredient_name}'
-                row["ingredients_rows"].append(ingredient_name)
-        row["ingredients"] = s
+    rows = get_shared_recipes()
 
-        # create tags string
-        tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
-        s = ''
-        if tag_rows:
-            row0 = tag_rows[0]
-            tag_name = db.tags[row0['tag']].name
-            s = tag_name
-            for tag_row in tag_rows[1:]:
-                tag_name = db.tags[tag_row['tag']].name
-                s += f', {tag_name}'
-        row["tags"] = s
-        row["tag_rows"] = tag_rows
+    tags = db(db.tags).select()
 
-    return dict(rows=rows, url_signer=url_signer)
+    return dict(
+        rows=rows,
+        tags=tags,
+        url_signer=url_signer,
+        search_url = URL('search_recipes', signer=url_signer),
+        load_shared_recipes_url = URL('load_shared_recipes'),
+    )
 
 
 @action('profile', method=["GET", "POST"])
@@ -118,6 +107,12 @@ def load_recipes():
     rows = db(db.recipes.m_email == get_user_email()).select().as_list()
     return dict(rows=rows)
 
+@action('load_shared_recipes')
+@action.uses(db)
+def load_recipes():
+    rows = get_shared_recipes()
+    return dict(rows=rows)
+
 @action('add_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def add_recipe():
@@ -148,6 +143,40 @@ def edit_recipe():
     time.sleep(1) # debugging
     return "ok"
 
+def get_shared_recipes(search_term=''):
+    rows = db((db.recipes.shared == True) & (db.recipes.name.like(f'%{search_term}%'))).select().as_list()
+    for row in rows:
+        # create ingredients string
+        ingredient_rows = db(
+            (db.recipe_ingredients.recipe == row['id'])).select()
+        s = ''
+        row["ingredients_rows"] = []
+        if ingredient_rows:
+            row0 = ingredient_rows[0]
+            ingredient_name = db.ingredients[row0['ingredient']].name
+            s = ingredient_name
+            row["ingredients_rows"].append(ingredient_name)
+            for ingredient_row in ingredient_rows[1:]:
+                ingredient_name = db.ingredients[ingredient_row['ingredient']].name
+                s += f', {ingredient_name}'
+                row["ingredients_rows"].append(ingredient_name)
+        row["ingredients"] = s
+
+        # create tags string
+        tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
+        s = ''
+        row["tag_rows"] = []
+        if tag_rows:
+            row0 = tag_rows[0]
+            tag_name = db.tags[row0['tag']].name
+            s = tag_name
+            row["tag_rows"].append(tag_name)
+            for tag_row in tag_rows[1:]:
+                tag_name = db.tags[tag_row['tag']].name
+                s += f', {tag_name}'
+                row["tag_rows"].append(tag_name)
+        row["tags"] = s
+    return rows
 
 """
 @action('add_recipe', method=["GET", "POST"])

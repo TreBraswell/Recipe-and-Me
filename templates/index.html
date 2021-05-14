@@ -8,19 +8,53 @@
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>Recipe and Me</title>
+   <style>
+      [v-cloak] {
+           display: none;
+      }
+   </style>
 </head>
 
-<div class="section mx-6">
-   <h1 class="title">Recipe and Me — Discover</h1>
-   
+<div class="section mx-6" id="vue-target" v-cloak>
    <div class="container">
+      <div class="level">
+         <h1 class="title">Recipe and Me — Discover</h1>
+         <div class="field has-addons">
+            <p class="control has-icons-left">
+               <input type="search" class="input" placeholder="Search..." v-model="query" @keyup="search"/>
+               <span class="icon is-small is-left">
+                  <i class="fa fa-search"></i>
+               </span>
+            </p>
+            <div class="dropdown control is-right is-hoverable">
+               <div class="dropdown-trigger">
+                 <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+                   <span>Filter by Tags</span>
+                   <span class="icon is-small">
+                     <i class="fa fa-angle-down" aria-hidden="true"></i>
+                   </span>
+                 </button>
+               </div>
+               <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                 <div class="dropdown-content">
+                  [[for tag in tags:]]
+                   <div class="dropdown-item has-text-right">
+                     <span class="tag is-rounded is-medium is-capitalized is-primary is-light">[[=tag.name]]</span>
+                   </div>
+                   [[pass]]
+                 </div>
+               </div>
+             </div>
+   
+         </div>
+      </div>
+
       <div class="tile is-ancestor is-flex-wrap-wrap">
-         [[for row in rows:]]
-         <div class="tile is-parent is-4">
+         <div class="tile is-parent is-4" v-for="row in rows">
             <div class="tile is-child card">
                <header class="card-header">
                   <p class="card-header-title is-centered">
-                     [[=row['name'] ]]
+                     {{row['name']}}
                   </p>
                </header>
                <div class="card-image">
@@ -29,15 +63,19 @@
                </figure>
                </div>
                <div class="card-content">
-                  <div class="content is-flex-wrap-nowrap">
-                     [[for ingredient in row['ingredients_rows']: ]]
-                     <span class="tag is-light is-rounded">[[=ingredient]]</span>
-                     [[pass]]
+                  <div class="content">
+                     <div class="tags">
+                        <span class="tag is-rounded is-medium is-capitalized" v-for="ingredient in row['ingredients_rows']">
+                           {{ingredient}}
+                        </span>
+                        <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in row['tag_rows']">
+                           {{tag}}
+                        </span>
+                     </div>
                   </div>
                </div>
             </div>
          </div>
-         [[pass]]
       </div>
 
       <table class="table is-striped is-fullwidth has-text-left">
@@ -61,5 +99,12 @@
 
    </div>
 </div>
-
+[[block page_scripts]]
+<!-- Loads the index-specific js for Vue -->
+<script>
+  let search_url = "[[=XML(search_url)]]";
+  let load_shared_recipes_url = "[[=XML(load_shared_recipes_url)]]"
+</script>
+<script src="js/index.js"></script>
+[[end]]
 </html>
