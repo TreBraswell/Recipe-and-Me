@@ -50,7 +50,7 @@
       </div>
 
       <div class="tile is-ancestor is-flex-wrap-wrap">
-         <div class="tile is-parent is-4" v-for="row in rows">
+         <div v-for="row in rows" class="tile is-parent is-4" >
             <div class="tile is-child card">
                <header class="card-header">
                   <p class="card-header-title is-centered">
@@ -74,6 +74,20 @@
                      </div>
                   </div>
                </div>
+               
+                <footer class="card-footer">
+                   <button class="button is-primary is-fullwidth"  @click="set_modal(true , row._idx)">View</button>
+                   <div v-if="modals[row._idx]" class="modal is-active">
+                        <div class="modal-background"></div>
+                            <div class="modal-content">
+                                 <p class="image is-4by3">
+                                     <img src="https://bulma.io/images/placeholders/1280x960.png" alt="">
+                                 </p>
+                            </div>
+                            <button class="modal-close is-large"  aria-label="close" @click="set_modal(false, row._idx)"></button>
+                    </div>
+               </footer>
+               
             </div>
          </div>
       </div>
