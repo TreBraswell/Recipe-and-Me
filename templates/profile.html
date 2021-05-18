@@ -93,6 +93,32 @@
                   <input type="checkbox" v-model="add_shared" class="checkbox">
                 </div>
               </div>
+              <div v-for="ingredient in add_ingredients" class="block">
+                <label class="label">Ingredient Name:</label>
+                <div class="field is-grouped">
+                  <div class="control">
+                    <input type="text" v-model="ingredient.add_name" class="input">
+                  </div>
+                  <div class="control">
+                    <button @click="delete_ingredient(ingredient._idx)" class="button is-danger">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="label">Ingredient Quantity:</label>
+                  <div class="control">
+                    <input type="text" v-model="ingredient.add_quantity" class="input">
+                  </div>
+                </div>
+              </div>
+              <div class="field">
+                <div class="control">
+                  <button @click="add_ingredient_input()" class="button is-primary">
+                    <i class="fa fa-plus fa-fw"></i> Add Ingredient
+                  </button>
+                </div>
+              </div>
               <div class="field">
                 <div class="control">
                   <input type="submit" @click="add_recipe" value="Add" class="button is-primary">

@@ -15,6 +15,7 @@ let init = (app) => {
         add_cook_time: 0,
         add_shared: false,
         rows: [],
+        add_ingredients: [],
     };
 
     app.enumerate = (a) => {
@@ -54,6 +55,14 @@ let init = (app) => {
             app.reset_form();
             app.set_add_status(false);
         });
+    };
+
+    app.add_ingredient_input = function () {
+        app.vue.add_ingredients.push({
+            add_name: "",
+            add_quantity: "",
+        });
+        app.enumerate(app.vue.rows);
     };
 
     app.reset_form = function () {
@@ -110,6 +119,7 @@ let init = (app) => {
         delete_recipe: app.delete_recipe,
         start_edit: app.start_edit,
         stop_edit: app.stop_edit,
+        add_ingredient_input: app.add_ingredient_input,
     };
 
     // This creates the Vue instance.
