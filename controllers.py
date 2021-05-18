@@ -155,11 +155,13 @@ def get_shared_recipes(search_term=''):
             row0 = ingredient_rows[0]
             ingredient_name = db.ingredients[row0['ingredient']].name
             s = ingredient_name
-            row["ingredients_rows"].append(ingredient_name)
+            ingredient = {"name": ingredient_name, "quantity": row0.quantity}
+            row["ingredients_rows"].append(ingredient)
             for ingredient_row in ingredient_rows[1:]:
                 ingredient_name = db.ingredients[ingredient_row['ingredient']].name
                 s += f', {ingredient_name}'
-                row["ingredients_rows"].append(ingredient_name)
+                ingredient = {"name": ingredient_name, "quantity": ingredient_row.quantity}
+                row["ingredients_rows"].append(ingredient)
         row["ingredients"] = s
 
         # create tags string
