@@ -40,10 +40,11 @@
                 <th>Steps</th>
                 <th>Cook Time</th>
                 <th>Shared</th>
+                <th>Ingredients</th>
                 <th></th>
               </tr>
               <tr v-for="r in rows">
-                <td v-for="fn in ['name', 'steps', 'cook_time', 'shared']">
+                <td v-for="fn in ['name', 'steps', 'cook_time', 'shared','myingredients']">
                   <div class="control" :class="{'is-loading': r._state[fn] === 'pending'}">
                     <input type="text" class="input" v-model="r[fn]" :class="{
                            'is-focused': r._state[fn] === 'edit',

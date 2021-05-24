@@ -105,6 +105,12 @@ def profile():
 @action.uses(url_signer.verify(), db)
 def load_recipes():
     rows = db(db.recipes.m_email == get_user_email()).select().as_list()
+    for row in rows:
+        tempname = ""
+        for temp in db(db.recipe_ingredients.recipe == row["id"]).select():
+           for temp2 in db(temp.ingredient).select():
+               tempname = tempname + temp2.name +" : " + temp.quantity +"\n"
+        row["myingredients"] = tempname
     return dict(rows=rows)
 
 @action('load_shared_recipes')

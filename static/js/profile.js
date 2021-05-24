@@ -13,7 +13,10 @@ let init = (app) => {
         add_name: "",
         add_steps: "",
         add_cook_time: 0,
+        add_can_edit : false,
         add_shared: false,
+        add_edit = false,
+        add_edit_id = 0,
         rows: [],
     };
 
@@ -55,7 +58,7 @@ let init = (app) => {
             app.set_add_status(false);
         });
     };
-
+    
     app.reset_form = function () {
 
         app.vue.add_name= "";
@@ -105,6 +108,7 @@ let init = (app) => {
     // We form the dictionary of all methods, so we can assign them
     // to the Vue app in a single blow.
     app.methods = {
+        change_can_edit : app.change_can_edit,
         add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,
         delete_recipe: app.delete_recipe,
