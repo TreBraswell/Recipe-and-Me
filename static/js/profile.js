@@ -15,9 +15,11 @@ let init = (app) => {
         add_cook_time: 0,
         add_can_edit : false,
         add_shared: false,
-        add_edit = false,
-        add_edit_id = 0,
+        add_ingredient: "",
+        add_amount: "",
+        showinfotextbox: false,
         rows: [],
+        temps: [],
     };
 
     app.enumerate = (a) => {
@@ -36,7 +38,19 @@ let init = (app) => {
         a.map((e) => {e._state = {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"} ;});
         return a;
     }
+    app.add_temp_ingredient = function () {
+        
+            app.vue.temps.push({
+                amount: app.vue.add_amount,
+                ingredient: app.vue.add_ingredient,
+        
+                _state: {amount: "clean", ingredient: "clean"},
+            });
+            app.reset_ingredient_form();
 
+
+
+    };
     app.add_recipe = function () {
         axios.post(add_recipe_url,
             {
@@ -44,6 +58,7 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
+                ingredients : add.vue.temps,
             }).then(function (response) {
             app.vue.rows.push({
                 id: response.data.id,
@@ -51,14 +66,22 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
+                amount: response.data.amount,
+                ingredient: response.data.ingredient,
                 _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"},
             });
             app.enumerate(app.vue.rows);
             app.reset_form();
             app.set_add_status(false);
+            app.vue.temps =[];
         });
     };
     
+    app.reset_ingredient_form = function () {
+
+        app.vue.add_ingredient= "";
+        app.vue.add_amount= "";
+    };
     app.reset_form = function () {
 
         app.vue.add_name= "";
@@ -108,6 +131,7 @@ let init = (app) => {
     // We form the dictionary of all methods, so we can assign them
     // to the Vue app in a single blow.
     app.methods = {
+        add_temp_ingredient: app.add_temp_ingredient,
         change_can_edit : app.change_can_edit,
         add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,

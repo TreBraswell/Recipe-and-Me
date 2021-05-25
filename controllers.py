@@ -87,13 +87,15 @@ def profile():
             last_name=form.vars['last_name']
         )
         redirect(URL('profile', signer=url_signer))
-
+    temps =[]
     return dict(
+        temps=temps,
         name=f"{user['first_name']} {user['last_name']}",
         url_signer=url_signer,
         form=form,
         myrecipes = myrecipes,
         load_recipes_url = URL('load_recipes', signer=url_signer),
+    
         add_recipe_url = URL('add_recipe', signer=url_signer),
         delete_recipe_url = URL('delete_recipe', signer=url_signer),
         edit_recipe_url = URL('edit_recipe', signer=url_signer),

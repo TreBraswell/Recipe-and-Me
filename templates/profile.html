@@ -64,12 +64,12 @@
 
 
 
-
+     
           <div v-if="add_mode" class="container block">
             <div class="title">Add Recipe</div>
             <div class="form">
 
-              <!-- This looks like a form, but is not.  We just need the inputs. -->
+             
               <div class="field">
                 <label class="label">Name:</label>
                 <div class="control">
@@ -93,6 +93,38 @@
                 <div class="control">
                   <input type="checkbox" v-model="add_shared" class="checkbox">
                 </div>
+              </div> 
+              <div class="container block">
+                <div v-if="temps.length>0" class="container block">
+                <table class="table is-striped is-fullwidth">
+                  <tr>
+                    <th>Ingredients</th>
+                    <th>Amount</th>
+                    
+                  </tr>
+                  <tr v-for="row in temps">
+
+                    <td>{{row.ingredient}}</td>
+                    <td>{{row.amount}}</td>
+                  </tr>
+                </table>
+                 </div>
+                <label class="label">Ingredients:</label>
+                <div class="control">
+                  <input type="text" v-model="add_ingredient" class="input">
+                </div>
+                <div class="field">
+                  <label class="label">Amount:</label>
+                  <div class="control">
+                    <input type="text" v-model="add_amount" class="input">
+                  </div>
+                </div>
+                <div class="field">
+                  <div class="control">
+                    <input type="submit" @click="add_temp_ingredient" value="Add" class="button is-primary">
+                  </div>
+                </div>
+            
               </div>
               <div class="field">
                 <div class="control">
