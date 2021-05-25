@@ -38,7 +38,7 @@
               <tr>
                 <th>Name</th>
                 <th>Steps</th>
-                <th>Cook Time</th>
+                <th>Cook Time (min)</th>
                 <th>Shared</th>
                 <th></th>
               </tr>
@@ -56,7 +56,7 @@
                     <i class="fa fa-trash"></i></button></td>
               </tr>
             </table>
-            <button @click="set_add_status(true)" class="button is-primary">
+            <button v-if="!add_mode" @click="set_add_status(true)" class="button is-primary">
               <i class="fa fa-plus fa-fw"></i> Add Recipe
             </button>
           </div>
@@ -82,7 +82,7 @@
                 </div>
               </div>
               <div class="field">
-                <label class="label">Cook Time:</label>
+                <label class="label">Cook Time (min):</label>
                 <div class="control">
                   <input type="text" v-model="add_cook_time" class="input">
                 </div>
@@ -94,21 +94,26 @@
                 </div>
               </div>
               <div v-for="ingredient in add_ingredients" class="block">
-                <label class="label">Ingredient Name:</label>
-                <div class="field is-grouped">
-                  <div class="control">
-                    <input type="text" v-model="ingredient.add_name" class="input">
-                  </div>
-                  <div class="control">
-                    <button @click="delete_ingredient(ingredient._idx)" class="button is-danger">
-                      <i class="fa fa-trash"></i>
-                    </button>
-                  </div>
-                </div>
-                <div class="field">
-                  <label class="label">Ingredient Quantity:</label>
-                  <div class="control">
-                    <input type="text" v-model="ingredient.add_quantity" class="input">
+                <label class="label">Ingredient:</label>
+                <div class="field is-horizontal">
+                  <div class="field-body">
+                    <div class="field">
+                      <div class="control">
+                        <input type="text" v-model="ingredient.add_name" class="input" placeholder="Ingredient name">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <div class="control">
+                        <input type="text" v-model="ingredient.add_quantity" class="input" placeholder="Quantity">
+                      </div>
+                    </div>
+                    <div class="field">
+                      <div class="control">
+                        <button @click="delete_ingredient(ingredient._idx)" class="button is-danger">
+                          <i class="fa fa-trash"></i>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -121,7 +126,7 @@
               </div>
               <div class="field">
                 <div class="control">
-                  <input type="submit" @click="add_recipe" value="Add" class="button is-primary">
+                  <input type="submit" @click="add_recipe" value="Add Recipe" class="button is-primary">
                   <input type="submit" @click="set_add_status(false)" value="Cancel" class="button is-warning">
                 </div>
               </div>
