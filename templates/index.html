@@ -42,17 +42,25 @@
                </div>
                <div class="dropdown-menu" id="dropdown-menu" role="menu">
                   <div class="dropdown-content">
-                     [[for tag in tags:]]
-                     <div class="dropdown-item has-text-right">
-                        <span class="tag is-rounded is-medium is-capitalized is-primary is-light">[[=tag.name]]</span>
+                     <div v-for="tag in tags" class="dropdown-item has-text-right is-clickable" @click="toggle_search_tag(tag._idx)" v-bind:class="{ 'has-background-primary': tag.is_active }">
+                        <span class="tag is-rounded is-medium is-capitalized is-primary is-light">{{tag.name}}</span>
                      </div>
-                     [[pass]]
                   </div>
                </div>
-             </div>
-   
+            </div>
          </div>
       </div>
+      <div v-if="query_tags.length > 0">
+         
+         <span class="tags" >
+            <span class="tag is-rounded is-medium is-capitalized has-background-white">Filtering by Tags: </span>
+            <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in query_tags">
+               {{tag.name}}
+               <button class="delete is-small" @click="remove_search_tag(tag._idx ? tag._idx : 0)"></button>
+            </span>
+         </span>
+      </div>
+      
 
       <div class="tile is-ancestor is-flex-wrap-wrap">
          <div v-for="row in rows" class="tile is-parent is-4">
@@ -129,26 +137,6 @@
             </div>
          </div>
       </div>
-
-      <table class="table is-striped is-fullwidth has-text-left">
-         <tr>
-            <th>Recipe Name</th>
-            <th>Steps</th>
-            <th>Cook Time</th>
-            <th>Ingredients</th>
-            <th>Tags</th>
-         </tr>
-         [[for row in rows:]]
-         <tr>
-            <td>[[=row['name'] ]]</td>
-            <td>[[=row['steps'] ]]</td>
-            <td>[[=row['cook_time'] ]]</td>
-            <td>[[=row['ingredients'] ]]</td>
-            <td>[[=row['tags'] ]]</td>
-         </tr>
-         [[pass]]
-      </table>
-
    </div>
 </div>
 [[block page_scripts]]

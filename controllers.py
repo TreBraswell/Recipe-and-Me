@@ -43,20 +43,18 @@ url_signer = URLSigner(session)
 @action.uses(db)
 def search_recipes():
     q = request.params.get("q")
-    results = [q + ":" + str(uuid.uuid1()) for _ in range(random.randint(2, 6))]
-    rows = get_shared_recipes(q)
-    return dict(results=results, rows=rows)
+    t = request.params.get("t")
+    t = [] if t is None or t == '' else t.split(',')
+    rows = get_shared_recipes(q, t)
+    return dict(rows=rows)
 
 @action('index')  # aka Discover
 @action.uses(db, auth, 'index.html', 'layout.html')
 def index():
     rows = get_shared_recipes()
 
-    tags = db(db.tags).select()
-
     return dict(
         rows=rows,
-        tags=tags,
         url_signer=url_signer,
         search_url = URL('search_recipes', signer=url_signer),
         load_shared_recipes_url = URL('load_shared_recipes'),
@@ -119,7 +117,10 @@ def load_recipes():
 @action.uses(db)
 def load_recipes():
     rows = get_shared_recipes()
-    return dict(rows=rows)
+    tags = db(db.tags).select().as_list()
+    for tag in tags:
+        tag = dict(name=tag, is_active=False)
+    return dict(rows=rows, tags=tags)
 
 @action('add_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
@@ -151,9 +152,9 @@ def edit_recipe():
     time.sleep(1) # debugging
     return "ok"
 
-def get_shared_recipes(search_term=''):
+def get_shared_recipes(search_term='', search_tags=[]):
     rows = db((db.recipes.shared == True) & (db.recipes.name.like(f'%{search_term}%'))).select().as_list()
-    for row in rows:
+    for row in reversed(rows):
         # create ingredients string
         ingredient_rows = db(
             (db.recipe_ingredients.recipe == row['id'])).select()
@@ -176,16 +177,27 @@ def get_shared_recipes(search_term=''):
         tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
         s = ''
         row["tag_rows"] = []
+        unmatched_tags = search_tags.copy()
         if tag_rows:
             row0 = tag_rows[0]
             tag_name = db.tags[row0['tag']].name
             s = tag_name
             row["tag_rows"].append(tag_name)
+
+            if tag_name in search_tags:
+                unmatched_tags.remove(tag_name)
+            
             for tag_row in tag_rows[1:]:
                 tag_name = db.tags[tag_row['tag']].name
                 s += f', {tag_name}'
                 row["tag_rows"].append(tag_name)
+                if tag_name in unmatched_tags:
+                    unmatched_tags.remove(tag_name)
         row["tags"] = s
+        
+        # remove row if searching with tags not in this row
+        if (len(unmatched_tags) > 0):
+                rows.remove(row)
     return rows
 
 """

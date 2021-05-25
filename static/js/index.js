@@ -11,7 +11,8 @@ let init = (app) => {
     app.data = {
         // Complete as you see fit.
         query: "",
-        results: [],
+        query_tags: [],
+        tags: [],
         rows: [],
         rows_data: [],
         modals:[]
@@ -25,18 +26,49 @@ let init = (app) => {
     };
 
     app.search = function () {
-        if (app.vue.query.length > 1) {
-            axios.get(search_url, {params: {q: app.vue.query}})
+        if (app.vue.query.length > 1 || app.vue.query_tags.length > 0) {
+            axios.get(search_url, {params: {q: app.vue.query, t: app.vue.query_tags.map(e => e.name).join(',')}})
                 .then(function (result) {
-                    app.vue.results = result.data.results;
-                    app.vue.rows = result.data.rows;
+                    app.vue.rows = app.enumerate(result.data.rows);
                 });
         } else {
-            app.vue.results = [];
-
             // reset the rows displayed to be everything after we clear out the search bar
             app.vue.rows = app.vue.rows_data;
         }
+    }
+
+    // add a new tag to query_tags
+    app.toggle_search_tag = function (index) {
+        if (!app.vue.tags[index].is_active) {
+            app.vue.query_tags.push(app.vue.tags[index]);
+
+            app.vue.tags[index].is_active = true;
+            app.vue.tags = app.enumerate(app.vue.tags);
+
+            app.search();
+        }
+        else {
+            app.remove_search_tag(index)
+        }
+    }
+
+    app.remove_search_tag = function (index) {
+        app.vue.tags[index].is_active = false;
+        app.vue.tags = app.enumerate(app.vue.tags);
+        result = app.remove_from_array(app.vue.query_tags, app.vue.tags[index].name);
+
+        app.search();
+        
+        return result;
+    }
+
+    app.remove_from_array = (arr, val) => {
+        let i = arr.findIndex(x => x.name === val);
+        if (i !== -1) {
+            arr.splice(i, 1);
+            return true;
+        }
+        return false;
     }
     
     app.set_modal = function ( is_displayed, index){
@@ -50,6 +82,8 @@ let init = (app) => {
     app.methods = {
         // Complete as you see fit.
         search: app.search,
+        toggle_search_tag: app.toggle_search_tag,
+        remove_search_tag: app.remove_search_tag,
         set_modal: app.set_modal,
     };
 
@@ -67,6 +101,7 @@ let init = (app) => {
         axios.get(load_shared_recipes_url).then(function (response) {
             app.vue.rows = app.enumerate(response.data.rows);
             app.vue.rows_data = app.vue.rows;
+            app.vue.tags = response.data.tags ? app.enumerate(response.data.tags) : []
             for (var i = 0; i < app.vue.rows.length; i++){
                 app.vue.modals.push(false);
                 console.log(typeof(app.vue.modals[i]));
