@@ -43,7 +43,7 @@ url_signer = URLSigner(session)
 @action.uses(db)
 def search_ingredients():
     q = request.params.get("q")
-    ingredient_rows = db(db.ingredients.name.like(f'%{search_term}%')).select(db.ingredients.name, db.ingredients.id)
+    ingredients = db(db.ingredients.name.like(f'%{q}%')).select().as_list()
     return dict(ingredients=ingredients)
 
 @action('search_recipes')
