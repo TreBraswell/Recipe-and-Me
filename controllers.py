@@ -39,6 +39,13 @@ from py4web import action, request, abort, redirect, URL
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
 url_signer = URLSigner(session)
 
+@action('search_ingredients')
+@action.uses(db)
+def search_ingredients():
+    q = request.params.get("q")
+    ingredient_rows = db(db.recipe_ingredients).select()
+    return dict(ingredients=ingredients)
+
 @action('search_recipes')
 @action.uses(db)
 def search_recipes():
