@@ -26,7 +26,8 @@ db.define_table(
           readable=False, writable=False),
     Field('m_email', 'string', default=get_user_email,
           readable=False, writable=False),
-    Field('shared', 'boolean', default=False)
+    Field('shared', 'boolean', default=False),
+    Field('image_url', 'string', default='https://bulma.io/images/placeholders/1280x960.png')
 )
 
 db.define_table(
