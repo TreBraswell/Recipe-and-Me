@@ -58,7 +58,7 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
-                ingredients : add.vue.temps,
+                ingredients : app.vue.temps,
             }).then(function (response) {
             app.vue.rows.push({
                 id: response.data.id,
@@ -66,8 +66,8 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
-                amount: response.data.amount,
-                ingredient: response.data.ingredient,
+                ingredients: app.vue.temps,
+                myingredients: app.vue.temps.map(({amount, ingredient}) => ingredient + " : " + amount).join(" -- \n"),
                 _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"},
             });
             app.enumerate(app.vue.rows);
@@ -132,7 +132,6 @@ let init = (app) => {
     // to the Vue app in a single blow.
     app.methods = {
         add_temp_ingredient: app.add_temp_ingredient,
-        change_can_edit : app.change_can_edit,
         add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,
         delete_recipe: app.delete_recipe,

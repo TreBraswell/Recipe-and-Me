@@ -39,13 +39,6 @@ from py4web import action, request, abort, redirect, URL
 from .common import db, session, T, cache, auth, logger, authenticated, unauthenticated, flash, Field
 url_signer = URLSigner(session)
 
-@action('search_ingredients')
-@action.uses(db)
-def search_ingredients():
-    q = request.params.get("q")
-    ingredients = db(db.ingredients.name.like(f'%{q}%')).select().as_list()
-    return dict(ingredients=ingredients)
-
 @action('search_recipes')
 @action.uses(db)
 def search_recipes():
@@ -54,6 +47,66 @@ def search_recipes():
     t = [] if t is None or t == '' else t.split(',')
     rows = get_shared_recipes(q, t)
     return dict(rows=rows)
+
+@action('search_ingredients')
+@action.uses(db)
+def search_ingredients():
+    q = request.params.get("q")
+    ingredients = db(db.ingredients.name.like(f'%{q}%')).select().as_list()
+    return dict(ingredients=ingredients)
+
+@action('get_recipe_ingredients/<recipe_id>', method=["GET"])
+@action.uses(db)
+def get_recipe_ingredients(recipe_id):
+    # get recipe ingredients names out from the database
+    rows = db((db.recipe_ingredients.recipe == recipe_id) &
+        (db.recipe_ingredients.ingredient == db.ingredients.id)
+        ).select(db.ingredients.name, db.recipe_ingredients.quantity).as_list()
+    return dict(rows=rows)
+
+@action('set_recipe_ingredient', method=["POST"])
+@action.uses(url_signer.verify(), db)
+def set_recipe_ingredient():
+    if get_user_email() != db.recipes[id].m_email:
+        return "Access denied"
+
+    recipe_id =request.json.get('recipe_id')
+    ingredient_name = request.json.get('ingredient_name')
+    quantity = request.json.get('quantity')
+    
+    update_or_insert_recipe_ingredient(recipe_id, ingredient_name, quantity)
+
+    return "ok"
+
+def update_or_insert_recipe_ingredient(recipe_id, ingredient_name, quantity):
+    # get ID of existing ingredient row in ingredients table, or insert a new row for the ingredient
+    ingredient = db(db.ingredients.name == ingredient_name).select(db.ingredients.id).first()
+    ingredient_id = ingredient.id if ingredient is not None else None
+
+    if ingredient_id is None:
+        ingredient_id = db.ingredients.insert(name=ingredient_name)
+
+    # update or insert to our row in recipe ingredients
+    rows = db.recipe_ingredients.update_or_insert(
+        ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)), 
+        recipe=recipe_id, 
+        ingredient=ingredient_id, 
+        quantity=quantity)
+
+@action('delete_recipe_ingredient', method=["POST"])
+@action.uses(url_signer.verify(), db)
+def delete_recipe_ingredient(recipe_id, ingredient_name):
+    if get_user_email() != db.recipes[id].m_email:
+        return "Access denied"
+
+    recipe_id =request.json.get('recipe_id')
+    ingredient_name = request.json.get('ingredient_name')    
+
+    # delete recipe ingredients row matching this recipe and ingredient
+    db((db.recipe_ingredients.recipe == recipe_id) & 
+        (db.recipe_ingredients.ingredient == db.ingredients.id)).delete()
+
+    return "ok"
 
 @action('index')  # aka Discover
 @action.uses(db, auth, 'index.html', 'layout.html')
@@ -104,6 +157,11 @@ def profile():
         add_recipe_url = URL('add_recipe', signer=url_signer),
         delete_recipe_url = URL('delete_recipe', signer=url_signer),
         edit_recipe_url = URL('edit_recipe', signer=url_signer),
+
+        search_ingredients_url = URL('search_ingredients', signer=url_signer),
+        get_recipe_ingredients_url = URL('get_recipe_ingredients', signer=url_signer),
+        set_recipe_ingredient_url = URL('set_recipe_ingredient', signer=url_signer),
+        delete_recipe_ingredient_url = URL('delete_recipe_ingredient', signer=url_signer),
     )
 
 
@@ -113,11 +171,13 @@ def profile():
 def load_recipes():
     rows = db(db.recipes.m_email == get_user_email()).select().as_list()
     for row in rows:
-        tempname = ""
-        for temp in db(db.recipe_ingredients.recipe == row["id"]).select():
-           for temp2 in db(temp.ingredient).select():
-               tempname = tempname + temp2.name +" : " + temp.quantity +"\n"
-        row["myingredients"] = tempname
+        ingredients_list = db((db.recipe_ingredients.recipe == row['id']) &
+        (db.recipe_ingredients.ingredient == db.ingredients.id)
+        ).select(db.ingredients.name, db.recipe_ingredients.quantity)
+        s = ""
+        for ingredient in ingredients_list:
+            s += ingredient.ingredients['name'] +" : " + ingredient.recipe_ingredients['quantity'] +" -- \n"
+        row["myingredients"] = s
     return dict(rows=rows)
 
 @action('load_shared_recipes')
@@ -138,6 +198,11 @@ def add_recipe():
         cook_time=request.json.get('cook_time'),
         shared=request.json.get('shared'),
     )
+
+    ingredients_list = request.json.get('ingredients')
+    for ingredient in ingredients_list:
+        update_or_insert_recipe_ingredient(id, ingredient['ingredient'], ingredient['amount'])
+
     return dict(id=id)
 
 @action('delete_recipe')
@@ -155,8 +220,11 @@ def edit_recipe():
     id = request.json.get("id")
     field = request.json.get("field")
     value = request.json.get("value")
+
+    if field == "myingredients":
+        return "Missing field"
+    
     db(db.recipes.id == id).update(**{field: value})
-    time.sleep(1) # debugging
     return "ok"
 
 def get_shared_recipes(search_term='', search_tags=[]):
