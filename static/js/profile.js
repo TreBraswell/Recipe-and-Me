@@ -131,7 +131,6 @@ let init = (app) => {
     // to the Vue app in a single blow.
     app.methods = {
         add_temp_ingredient: app.add_temp_ingredient,
-        change_can_edit : app.change_can_edit,
         add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,
         delete_recipe: app.delete_recipe,
