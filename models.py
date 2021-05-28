@@ -47,7 +47,7 @@ db.define_table(
     'recipe_ingredients',
     Field('recipe', 'reference recipes'),
     Field('ingredient', 'reference ingredients'),
-    Field('quantity', 'string')
+    Field('quantity', 'string')  
 )
 
 db.define_table(

@@ -112,12 +112,12 @@ def profile():
 @action.uses(url_signer.verify(), db)
 def load_recipes():
     rows = db(db.recipes.m_email == get_user_email()).select().as_list()
+    
     for row in rows:
-        tempname = ""
-        for temp in db(db.recipe_ingredients.recipe == row["id"]).select():
-           for temp2 in db(temp.ingredient).select():
-               tempname = tempname + temp2.name +" : " + temp.quantity +"\n"
-        row["myingredients"] = tempname
+        toret =[]
+        for temp in db(db.recipe_ingredients.recipe == row["id"]).select().as_list():
+            toret.append({"amount": temp.quantity, "ingredient": db(db.ingredients.id == temp.ingredient).select().first().name})
+        row["myingredients"] = toret
     return dict(rows=rows)
 
 @action('load_shared_recipes')
@@ -138,7 +138,19 @@ def add_recipe():
         cook_time=request.json.get('cook_time'),
         shared=request.json.get('shared'),
     )
-    return dict(id=id)
+    finaltemp = []
+    myingredients1 = request.json.get('ingredients')
+    
+    for temp in myingredients1: 
+        print(temp)
+        temp2 = db(db.ingredients.name == temp["ingredient"]).select().first()
+        if temp2:
+            temp3 = temp2
+        else:
+           temp3 =  db.ingredients.insert(name = temp["ingredient"],avg_price = random.randrange(5,15),)
+        finalfinal = db.recipe_ingredients.insert(recipe = id,ingredient = temp3,quantity = temp["amount"],)
+        
+    return dict(id=id, myingredients= myingredients1)
 
 @action('delete_recipe')
 @action.uses(url_signer.verify(), db)

@@ -58,7 +58,7 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
-                ingredients : add.vue.temps,
+                ingredients : app.vue.temps,
             }).then(function (response) {
             app.vue.rows.push({
                 id: response.data.id,
@@ -66,9 +66,8 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
-                amount: response.data.amount,
-                ingredient: response.data.ingredient,
-                _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"},
+                myingredients: response.data.myingredients,
+                _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean",myingredients: "clean"},
             });
             app.enumerate(app.vue.rows);
             app.reset_form();
@@ -91,7 +90,7 @@ let init = (app) => {
     };
 
     app.delete_recipe = function(row_idx) {
-        console.log("huh");
+        
         let id = app.vue.rows[row_idx].id;
         axios.get(delete_recipe_url, {params: {id: id}}).then(function (response) {
             for (let i = 0; i < app.vue.rows.length; i++) {
