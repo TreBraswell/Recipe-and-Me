@@ -174,7 +174,7 @@ def load_recipes():
     for row in rows:
         toret =[]
         for temp in db(db.recipe_ingredients.recipe == row["id"]).select().as_list():
-            toret.append({"amount": temp.quantity, "ingredient": db(db.ingredients.id == temp.ingredient).select().first().name})
+            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name})
         row["myingredients"] = toret
     return dict(rows=rows)
 
