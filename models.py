@@ -11,6 +11,9 @@ def get_user_email():
     return auth.current_user.get('email') if auth.current_user else None
 
 
+def get_user():
+    return auth.current_user.get('id') if auth.current_user else None
+
 def get_time():
     return datetime.datetime.utcnow()
 
@@ -74,5 +77,14 @@ db.define_table(  # List of Substitutions for ingredients
     Field('sub_ingredient', 'reference ingredients'),
     Field('sub_rate', 'integer', requires=IS_INT_IN_RANGE(1, 6))
 )
+
+db.define_table(    # ratings of recipes by user
+    'rating',
+    Field('recipe', 'reference recipes'),
+    Field ('user', 'reference auth_user', defaul =  get_user),
+    Field('rating', 'integer')
+    
+    )
+
 
 db.commit()

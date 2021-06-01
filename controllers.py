@@ -30,7 +30,7 @@ import uuid
 import random
 
 from yatl.helpers import A
-from .models import get_user_email
+from .models import get_user_email, get_user
 
 from pydal.validators import *
 from py4web.utils.url_signer import URLSigner
@@ -112,12 +112,14 @@ def delete_recipe_ingredient(recipe_id, ingredient_name):
 @action.uses(db, auth, 'index.html', 'layout.html')
 def index():
     rows = get_shared_recipes()
-
+    current_user = get_user()
     return dict(
         rows=rows,
         url_signer=url_signer,
         search_url = URL('search_recipes', signer=url_signer),
         load_shared_recipes_url = URL('load_shared_recipes'),
+        update_rating_url = URL ('update_rating', signer=url_signer ),
+        current_user = current_user,
     )
 
 
@@ -185,7 +187,8 @@ def load_recipes():
     tags = db(db.tags).select().as_list()
     for tag in tags:
         tag = dict(name=tag, is_active=False)
-    return dict(rows=rows, tags=tags)
+    current_user = get_user() 
+    return dict(rows=rows, tags=tags, current_user = current_user)
 
 @action('add_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
@@ -252,7 +255,18 @@ def get_shared_recipes(search_term='', search_tags=[]):
                 ingredient = {"name": ingredient_name, "quantity": ingredient_row.quantity}
                 row["ingredients_rows"].append(ingredient)
         row["ingredients"] = s
-
+        
+        
+         # create rating fields
+        ratings =  db(( db.rating.recipe == row['id'] )).select()
+        row["total_rating"] = 0
+        row ["raters"] = []
+        if len(ratings)!= 0:
+            for rating in ratings:
+                row["total_rating"] =row["total_rating"] + rating["rating"]
+                row["raters"].append(rating["user"])
+        
+        
         # create tags string
         tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
         s = ''
@@ -279,6 +293,21 @@ def get_shared_recipes(search_term='', search_tags=[]):
         if (len(unmatched_tags) > 0):
                 rows.remove(row)
     return rows
+
+@action('update_rating', method='POST')
+@action.uses(url_signer.verify(), db, auth.user)
+def update_rating():
+    """Sets the rating for an image."""
+    row_id = request.json.get('row_id')
+    rating = request.json.get('rating')
+    assert row_id is not None and rating is not None
+    db.rating.update_or_insert(
+        ((db.rating.recipe == row_id) & (db.rating.user == get_user())),
+        recipe=row_id,
+        user=get_user(),
+        rating=rating
+    )
+    return "ok"
 
 """
 @action('add_recipe', method=["GET", "POST"])

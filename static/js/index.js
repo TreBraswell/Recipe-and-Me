@@ -15,7 +15,8 @@ let init = (app) => {
         tags: [],
         rows: [],
         rows_data: [],
-        modals:[]
+        modals:[],
+        user: -1,
     };
 
     app.enumerate = (a) => {
@@ -24,7 +25,50 @@ let init = (app) => {
         a.map((e) => {e._idx = k++;});
         return a;
     };
+    
+    app.complete = (rows) => {
+        // Initializes useful fields of rows.
+        rows.map((row) => {
+            row.rating = 0;
+            row.num_stars_display = 0;
+        });
+        for ( i = 0; i <rows.length; i++){
+            if (rows[i].total_rating === 0){
+                rows[i].rating = 0;
+            }
+            else{
+                rows[i].rating = rows[i].total_rating/(rows[i].raters.length);
+                rows[i].num_stars_display = rows[i].rating;
+            }
+        }
+        
+        
+    };
+    
+    app.set_stars = (row_idx, num_stars) => {
+        if (!app.vue.rows[row_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
+            let row = app.vue.rows[row_idx];
+            row.total_rating = row.total_rating + num_stars;
+            row.raters.push(app.vue.user);
+            row.rating = (row.total_rating)/(row.raters.length);
+            // Sets the stars on the server.
+            axios.post(update_rating_url, {row_id: row.id, rating: num_stars, rater: app.vue.user});
+        }
+        
+    };
+    
+    app.stars_out = (row_idx) => {
+        let row = app.vue.rows[row_idx];
+        row.num_stars_display = row.rating;
+    };
 
+    app.stars_over = (row_idx, num_stars) => {
+        if (!app.vue.rows[row_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
+            let row = app.vue.rows[row_idx];
+            row.num_stars_display = num_stars;
+        }
+    };
+    
     app.search = function () {
         if (app.vue.query.length > 1 || app.vue.query_tags.length > 0) {
             axios.get(search_url, {params: {q: app.vue.query, t: app.vue.query_tags.map(e => e.name).join(',')}})
@@ -85,6 +129,9 @@ let init = (app) => {
         toggle_search_tag: app.toggle_search_tag,
         remove_search_tag: app.remove_search_tag,
         set_modal: app.set_modal,
+        set_stars: app.set_stars,
+        stars_out: app.stars_out,
+        stars_over: app.stars_over,
     };
 
     // This creates the Vue instance.
@@ -99,9 +146,16 @@ let init = (app) => {
         // Put here any initialization code.
         // Typically this is a server GET call to load the data.
         axios.get(load_shared_recipes_url).then(function (response) {
-            app.vue.rows = app.enumerate(response.data.rows);
+            let rows = response.data.rows;
+            app.enumerate(rows);
+            app.complete(rows);
+            app.vue.rows = rows;
+            
             app.vue.rows_data = app.vue.rows;
             app.vue.tags = response.data.tags ? app.enumerate(response.data.tags) : []
+             if (response.data.current_user !== null){
+                app.vue.user = response.data.current_user;
+            }
             for (var i = 0; i < app.vue.rows.length; i++){
                 app.vue.modals.push(false);
                 console.log(typeof(app.vue.modals[i]));
