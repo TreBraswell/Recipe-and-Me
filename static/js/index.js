@@ -73,7 +73,10 @@ let init = (app) => {
         if (app.vue.query.length > 1 || app.vue.query_tags.length > 0) {
             axios.get(search_url, {params: {q: app.vue.query, t: app.vue.query_tags.map(e => e.name).join(',')}})
                 .then(function (result) {
-                    app.vue.rows = app.enumerate(result.data.rows);
+                    let rows = result.data.rows;
+                    app.enumerate(rows);
+                    app.complete(rows);
+                    app.vue.rows = rows;
                 });
         } else {
             // reset the rows displayed to be everything after we clear out the search bar
@@ -158,7 +161,6 @@ let init = (app) => {
             }
             for (var i = 0; i < app.vue.rows.length; i++){
                 app.vue.modals.push(false);
-                console.log(typeof(app.vue.modals[i]));
             }
         });
     };

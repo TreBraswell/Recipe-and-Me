@@ -10,7 +10,7 @@
       object-fit: cover;
    }
 
-   /* tile hover effect */
+   /* Tile hover effect */
    /* https://nestedsoftware.com/2019/11/05/card-with-expand-on-hover-effect-2ccm.200941.html */
    .tile.is-child {
       transition: all .3s ease;
@@ -22,6 +22,7 @@
       cursor: pointer;
    }
 
+   /* Switch column order on mobile (for modal sidebar and image) */
    /* https://stackoverflow.com/questions/49953907/switch-columns-in-bulma-css */
    @media (max-width: 768px) { 
       .columns.is-mobile-reversed {
@@ -131,6 +132,17 @@
                               </p>
                            </div>
                            <div class="column">
+                               <!-- Star area -->
+                              <div @mouseout="stars_out(row._idx)" class="has-text-right">
+                                 Rating: {{row.rating}}  <br />
+                                 <span @mouseover="stars_over(row._idx, star_idx)"
+                                       @click="set_stars(row._idx, star_idx)"
+                                       v-for="star_idx in [1, 2, 3, 4, 5]">
+                                    <i v-if="star_idx <= row.num_stars_display" class="fa fa-star"></i>
+                                    <i v-if="star_idx > row.num_stars_display" class="fa fa-star-o"></i>
+                                 </span>
+                              </div>
+
                               <p class="image is-4by3">
                                  <img v-bind:src="row['image_url']" alt="Recipe image">
                               </p>
@@ -139,24 +151,12 @@
                         
                         <p class="is-size-5">Preparation Steps</p>
                         <p>{{row['steps']}}</p>
-                        
-                        <!-- Star area -->
-                        <span @mouseout="stars_out(row._idx)">
-                            Rating: {{row.rating}}  <br />
-                            <span @mouseover="stars_over(row._idx, star_idx)"
-                                    @click="set_stars(row._idx, star_idx)"
-                                    v-for="star_idx in [1, 2, 3, 4, 5]">
-                                <i v-if="star_idx <= row.num_stars_display" class="fa fa-star"></i>
-                                <i v-if="star_idx > row.num_stars_display" class="fa fa-star-o"></i>
-                             </span>
-                         </span>
-                        
-                        
                      </section>
-                     <footer class="modal-card-foot">
+                     <!-- This footer can be added in if we implement saving recipes or viewing other users' profiles -->
+                     <!-- <footer class="modal-card-foot">
                         <button class="button">Save Recipe for Later</button>
                         <button class="button">View Creator's Profile</button>  
-                     </footer>
+                     </footer> -->
                   </div>
                   <button class="modal-close is-large"  aria-label="close" @click.stop="set_modal(false, row._idx)"></button>
             </div>
