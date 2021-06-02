@@ -154,12 +154,13 @@ def profile():
         url_signer=url_signer,
         form=form,
         myrecipes = myrecipes,
+        delete_ingredient_url = URL('delete_ingredient', signer=url_signer),
         load_recipes_url = URL('load_recipes', signer=url_signer),
     
         add_recipe_url = URL('add_recipe', signer=url_signer),
         delete_recipe_url = URL('delete_recipe', signer=url_signer),
+        edit_ingredient_url = URL('edit_ingredient', signer=url_signer),
         edit_recipe_url = URL('edit_recipe', signer=url_signer),
-
         search_ingredients_url = URL('search_ingredients', signer=url_signer),
         get_recipe_ingredients_url = URL('get_recipe_ingredients', signer=url_signer),
         set_recipe_ingredient_url = URL('set_recipe_ingredient', signer=url_signer),
@@ -220,7 +221,25 @@ def delete_recipe():
     assert id is not None
     db(db.recipes.id == id).delete()
     return "ok"
-
+@action('delete_ingredient')
+@action.uses(url_signer.verify(), db)
+def delete_ingredient():
+    id = request.params.get('id')
+    refing = request.params.get('ingredient')
+    refamount = request.params.get('amount')
+    assert id is not None
+    rows = db(db.recipe_ingredients.recipe == id).select().as_list()
+    for row in rows:
+        
+        if row['quantity'] == refamount:
+            for temp in db(db.ingredients).select().as_list():
+                if temp['name'] == refing:
+                    
+                    db(db.recipe_ingredients.ingredient == temp['id']).delete()
+                    print(row)
+                    return
+    
+    return "ok"
 @action('edit_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def edit_recipe():
@@ -233,6 +252,19 @@ def edit_recipe():
         return "Missing field"
     
     db(db.recipes.id == id).update(**{field: value})
+    return "ok"
+@action('edit_ingredient', method="POST")
+@action.uses(url_signer.verify(), db)
+def edit_ingredient():
+    # Updates the db record.
+    id = request.json.get("id")
+    field = request.json.get("field")
+    value = request.json.get("value")
+
+    if field == "myingredients":
+        return "Missing field"
+    
+    db(db.recipe_ingredients.id == id).update(**{field: value})
     return "ok"
 
 def get_shared_recipes(search_term='', search_tags=[]):
