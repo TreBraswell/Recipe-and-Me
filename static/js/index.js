@@ -70,7 +70,7 @@ let init = (app) => {
     };
     
     app.search = function () {
-        if (app.vue.query.length > 1 || app.vue.query_tags.length > 0) {
+        if (app.vue.query.length > 0 || app.vue.query_tags.length > 0) {
             axios.get(search_url, {params: {q: app.vue.query, t: app.vue.query_tags.map(e => e.name).join(',')}})
                 .then(function (result) {
                     let rows = result.data.rows;

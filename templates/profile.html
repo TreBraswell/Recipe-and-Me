@@ -205,9 +205,9 @@
                   </tr>
                 </table>
                  </div>
-                <label class="label">Ingredients:</label>
+                <label class="label">Ingredient:</label>
                 <div class="control">
-                  <input type="text" v-model="add_ingredient" class="input">
+                  <input type="text" v-model="add_ingredient" class="input" @input="search_ingredients">
                 </div>
                 <div class="field">
                   <label class="label">Amount:</label>
@@ -248,6 +248,7 @@
   let edit_recipe_url = "[[=XML(edit_recipe_url)]]";
   let edit_ingredient_url = "[[=XML(edit_ingredient_url)]]";
   let delete_ingredient_url = "[[=XML(delete_ingredient_url)]]";
+  let search_ingredients_url = "[[=XML(search_ingredients_url)]]";
 </script>
 <script src="js/profile.js"></script>
 [[end]]

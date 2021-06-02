@@ -22,6 +22,7 @@ let init = (app) => {
         showinfotextbox: false,
         rows: [],
         temps: [],
+        search_ingredients_results: [],
     };
 
     app.enumerate = (a) => {
@@ -91,6 +92,7 @@ let init = (app) => {
     app.edit_ingredient = function() {
         
     };
+
     app.add_recipe = function () {
         axios.post(add_recipe_url,
             {
@@ -199,6 +201,20 @@ let init = (app) => {
         }
         // If I was not editing, there is nothing that needs saving.
     };
+    app.search_ingredients = function () {
+        if (app.vue.add_ingredient.length > 0) {
+            axios.get(search_ingredients_url, {params: {q: app.vue.add_ingredient}})
+                .then(function (result) {
+                    let search_results = result.data.ingredients;
+                    app.enumerate(search_results);
+                    app.vue.search_ingredients_results = search_results;
+                });
+        } else {
+            // reset the rows displayed to be everything after we clear out the search bar
+            app.vue.search_ingredients_results = [];
+        }
+    }
+
     // We form the dictionary of all methods, so we can assign them
     // to the Vue app in a single blow.
     app.methods = {
@@ -216,6 +232,7 @@ let init = (app) => {
         edit_temp_ingredient: app.edit_temp_ingredient,
         delete_ingredient: app.delete_ingredient,
         edit_ingredient: app.edit_ingredient,
+        search_ingredients: app.search_ingredients,
     };
 
     // This creates the Vue instance.
