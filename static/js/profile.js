@@ -173,17 +173,20 @@ let init = (app) => {
     };
 
     app.stop_edit_ingredient = function (row_idx,row_idx2, fn) {
+        let row1 = app.vue.rows[row_idx];
         let row = app.vue.rows[row_idx].myingredients[row_idx2];
         if (row._state[fn] === "edit") {
             row._state[fn] = "pending";
-            // axios.post(edit_ingredient_url,
-            //     {
-            //         id: row.id,
-            //         field: fn,
-            //         value: row[fn], // row.first_name
-            //     }).then(function (result) {
-            //     row._state[fn] = "clean";
-            // });
+            axios.post(edit_ingredient_url,
+                {
+                    id: row1.id,
+                    field: fn,
+                    value: row[fn], // row.first_name
+                    ingredient : app.vue.rows[row_idx].myingredients[row_idx2].ingredient,
+                    amount : app.vue.rows[row_idx].myingredients[row_idx2].amount,
+                }).then(function (result) {
+                row._state[fn] = "clean";
+            });
             row._state[fn] = "clean";
         }
         // If I was not editing, there is nothing that needs saving.
@@ -248,7 +251,7 @@ let init = (app) => {
     // For the moment, we 'load' the data from a string.
     app.init = () => {
         axios.get(load_recipes_url).then(function (response) {
-           app.vue.rows = app.decorate(app.enumerate(response.data.rows));
+          app.vue.rows = app.decorate(app.enumerate(response.data.rows));
             //app.vue.temps = app.decorate(app.enumerate(response.data.temps));
        });
     };

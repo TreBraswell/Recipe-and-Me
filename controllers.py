@@ -177,7 +177,7 @@ def load_recipes():
     for row in rows:
         toret =[]
         for temp in db(db.recipe_ingredients.recipe == row["id"]).select().as_list():
-            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name})
+            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name,'_state': {'amount': "clean", 'ingredient': "clean"},})
         row["myingredients"] = toret
     return dict(rows=rows)
 
@@ -204,7 +204,7 @@ def add_recipe():
     myingredients1 = request.json.get('ingredients')
     
     for temp in myingredients1: 
-        print(temp)
+        
         temp2 = db(db.ingredients.name == temp["ingredient"]).select().first()
         if temp2:
             temp3 = temp2
@@ -260,11 +260,20 @@ def edit_ingredient():
     id = request.json.get("id")
     field = request.json.get("field")
     value = request.json.get("value")
-
-    if field == "myingredients":
-        return "Missing field"
+    amou = request.json.get("amount")
+    ingre = request.json.get("ingredient")
+    if field == 'ingredient' and db(db.ingredients.name == value).select().first() == None:
+        
+        newref = db.ingredients.insert(
+            name = value,
+            avg_price = random.randrange(5,15),
+        )
+        db(db.recipe_ingredients.recipe == id).update(**{'ingredient': newref})
+    elif field == "amount":
+        db(db.recipe_ingredients.recipe == id).update(**{'quantity': value})
+        pass
     
-    db(db.recipe_ingredients.id == id).update(**{field: value})
+    
     return "ok"
 
 def get_shared_recipes(search_term='', search_tags=[]):

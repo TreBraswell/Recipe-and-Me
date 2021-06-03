@@ -95,22 +95,22 @@
 
                           <td>
                             {{temp.ingredient}}
-                            <!-- <div class="control" :class="{'is-loading': temp._state['ingredient'] === 'pending'}">
+                            <div class="control" :class="{'is-loading': temp._state['ingredient'] === 'pending'}">
                               <input type="text" class="input" v-model="temp['ingredient']" :class="{
                                      'is-focused': temp._state['ingredient'] === 'edit',
                                      'is-static': temp._state['ingredient'] === 'clean',
                                    }" :readonly="temp._state['ingredient'] === 'clean'" @click="start_edit_ingredient(r._idx,temp._idx, 'ingredient')"
                                 @blur="stop_edit_ingredient(r._idx,temp._idx, 'ingredient')" />
-                            </div> -->
+                            </div>
                           </td>
                           <td>{{temp.amount}}
-                            <!-- <div class="control" :class="{'is-loading': temp._state['amount'] === 'pending'}">
+                            <div class="control" :class="{'is-loading': temp._state['amount'] === 'pending'}">
                               <input type="text" class="input" v-model="temp['amount']" :class="{
                                      'is-focused': temp._state['amount'] === 'edit',
                                      'is-static': temp._state['amount'] === 'clean',
                                    }" :readonly="temp._state['amount'] === 'clean'" @click="start_edit_ingredient(r._idx,temp._idx, 'amount')"
                                 @blur="stop_edit_ingredient(r._idx,temp._idx, 'amount')" />
-                            </div> -->
+                            </div>
                           </td>
                           <td>
                             <button @click="delete_ingredient(r._idx,temp.ingredient,temp.amount)" class="button is-danger">
