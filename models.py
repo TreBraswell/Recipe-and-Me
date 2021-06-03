@@ -88,3 +88,100 @@ db.define_table(    # ratings of recipes by user
 
 
 db.commit()
+
+
+# MySQL table definitions
+'''
+CREATE TABLE `recipes`(
+    `id` INTEGER AUTO_INCREMENT,
+    `name` VARCHAR(512),
+    `steps` VARCHAR(512),
+    `cook_time` INTEGER,
+    `rating` DOUBLE,
+    `num_ratings` INTEGER,
+    `m_datetime` TIMESTAMP,
+    `m_email` VARCHAR(512),
+    `shared` VARCHAR(1),
+    `image_url` VARCHAR(512),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `saved_recipes`(
+    `id` INTEGER AUTO_INCREMENT,
+    `recipe` INTEGER,
+    `m_email` VARCHAR(512),
+    `starred` VARCHAR(1),
+    PRIMARY KEY (`id`),
+    KEY `recipe_fk` (`recipe`),
+    CONSTRAINT `recipe_fk` FOREIGN KEY (`recipe`) REFERENCES `recipes` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `ingredients`(
+    `id` INTEGER AUTO_INCREMENT,
+    `name` VARCHAR(512),
+    `avg_price` INTEGER,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `recipe_ingredients`(
+    `id` INTEGER AUTO_INCREMENT,
+    `recipe` INTEGER,
+    `ingredient` INTEGER,
+    `quantity` VARCHAR(512),
+    PRIMARY KEY (`id`),
+    KEY `ri_recipe_fk` (`recipe`),
+    CONSTRAINT `ri_recipe_fk` FOREIGN KEY (`recipe`) REFERENCES `recipes` (`id`) ON DELETE CASCADE,
+    KEY `ri_ingredient_fk` (`ingredient`),
+    CONSTRAINT `ri_ingredient_fk` FOREIGN KEY (`ingredient`) REFERENCES `ingredients` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `allergies`(
+    `id` INTEGER AUTO_INCREMENT,
+    `m_email` VARCHAR(512),
+    `allergen` INTEGER,
+    PRIMARY KEY (`id`),
+    KEY `allergen_fk` (`allergen`),
+    CONSTRAINT `allergen_fk` FOREIGN KEY (`allergen`) REFERENCES `ingredients` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `tags`(
+    `id` INTEGER AUTO_INCREMENT,
+    `name` VARCHAR(512),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `recipe_tags`(
+    `id` INTEGER AUTO_INCREMENT,
+    `recipe` INTEGER,
+    `tag` INTEGER,
+    PRIMARY KEY (`id`),
+    KEY `rt_recipe_fk` (`recipe`),
+    CONSTRAINT `rt_recipe_fk` FOREIGN KEY (`recipe`) REFERENCES `recipes` (`id`) ON DELETE CASCADE,
+    KEY `tag_fk` (`tag`),
+    CONSTRAINT `tag_fk` FOREIGN KEY (`tag`) REFERENCES `tags` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `substitutions`(
+    `id` INTEGER AUTO_INCREMENT,
+    `original_ingredient` INTEGER,
+    `sub_ingredient` INTEGER,
+    `sub_rate` INTEGER,
+    PRIMARY KEY (`id`),
+    KEY `original_ingredient_fk` (`original_ingredient`),
+    CONSTRAINT `original_ingredient_fk` FOREIGN KEY (`original_ingredient`) REFERENCES `ingredients` (`id`) ON DELETE CASCADE,
+    KEY `sub_ingredient_fk` (`sub_ingredient`),
+    CONSTRAINT `sub_ingredient_fk` FOREIGN KEY (`sub_ingredient`) REFERENCES `ingredients` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE `rating`(
+    `id` INTEGER AUTO_INCREMENT,
+    `recipe` INTEGER,
+    `user` INTEGER,
+    `rating` INTEGER,
+    PRIMARY KEY (`id`),
+    KEY `r_recipe_fk` (`recipe`),
+    CONSTRAINT `r_recipe_fk` FOREIGN KEY (`recipe`) REFERENCES `recipes` (`id`) ON DELETE CASCADE,
+    KEY `r_user_fk` (`recipe`),
+    CONSTRAINT `r_user_fk` FOREIGN KEY (`recipe`) REFERENCES `auth_user` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+'''

@@ -53,8 +53,7 @@
               </div>
             </div>
             [[else:]]
-            <a class="button is-link" href="[[=URL('auth/register')]]">Sign up</a>
-            <a class="button is-success" href="[[=URL('auth/login')]]">Log in</a>
+            <a class="button is-success" href="[[=URL('auth/plugin/oauth2google/login', vars=dict(next='/Recipe-and-Me'))]]">Log in</a>
             [[pass]]
           </div>
         </div>
