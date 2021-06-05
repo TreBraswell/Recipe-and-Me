@@ -52,7 +52,7 @@ def search_recipes():
 @action.uses(db)
 def search_ingredients():
     q = request.params.get("q")
-    ingredients = db(db.ingredients.name.like(f'%{q}%')).select().as_list()
+    ingredients = db(db.ingredients.name.like(f'%{q}%')).select(orderby=db.ingredients.name).as_list()
     return dict(ingredients=ingredients)
 
 @action('get_recipe_ingredients/<recipe_id>', method=["GET"])
@@ -67,18 +67,17 @@ def get_recipe_ingredients(recipe_id):
 @action('set_recipe_ingredient', method=["POST"])
 @action.uses(url_signer.verify(), db)
 def set_recipe_ingredient():
-    if get_user_email() != db.recipes[id].m_email:
-        return "Access denied"
-
     recipe_id =request.json.get('recipe_id')
+    recipe_ingredient_id =request.json.get('recipe_ingredient_id')
     ingredient_name = request.json.get('ingredient_name')
     quantity = request.json.get('quantity')
+
+    if get_user_email() != db.recipes[recipe_id].m_email:
+        return "Access denied"
     
-    update_or_insert_recipe_ingredient(recipe_id, ingredient_name, quantity)
+    return update_or_insert_recipe_ingredient(recipe_id, recipe_ingredient_id, ingredient_name, quantity)
 
-    return "ok"
-
-def update_or_insert_recipe_ingredient(recipe_id, ingredient_name, quantity):
+def update_or_insert_recipe_ingredient(recipe_id, recipe_ingredients_id, ingredient_name, quantity):
     # get ID of existing ingredient row in ingredients table, or insert a new row for the ingredient
     ingredient = db(db.ingredients.name == ingredient_name).select(db.ingredients.id).first()
     ingredient_id = ingredient.id if ingredient is not None else None
@@ -87,28 +86,44 @@ def update_or_insert_recipe_ingredient(recipe_id, ingredient_name, quantity):
         ingredient_id = db.ingredients.insert(name=ingredient_name)
 
     # update or insert to our row in recipe ingredients
-    rows = db.recipe_ingredients.update_or_insert(
-        ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)), 
-        recipe=recipe_id, 
-        ingredient=ingredient_id, 
-        quantity=quantity)
+    if recipe_ingredients_id is not None:
+        # if we have a recipe_ingredients id, update that entry
+        db.recipe_ingredients.update_or_insert(
+            (db.recipe_ingredients.id == recipe_ingredients_id),
+            ingredient=ingredient_id, 
+            quantity=quantity)
+        response = "ok"
+    else:
+        # otherwise, update or insert a recipe_ingredients entry with an unknown id
+        db.recipe_ingredients.update_or_insert(
+            ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)), 
+            ingredient=ingredient_id, 
+            quantity=quantity)
+        response = db.recipe_ingredients(
+            (db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)).select(
+                db.recipe_ingredients.id)
+
+    return response
 
 @action('delete_recipe_ingredient', method=["POST"])
 @action.uses(url_signer.verify(), db)
 def delete_recipe_ingredient(recipe_id, ingredient_name):
-    if get_user_email() != db.recipes[id].m_email:
+    recipe_id =request.json.get('recipe_id')
+    recipe_ingredient_id = request.json.get('recipe_ingredient_id') 
+
+    if get_user_email() != db.recipes[recipe_id].m_email:
         return "Access denied"
 
-    recipe_id =request.json.get('recipe_id')
-    ingredient_name = request.json.get('ingredient_name')    
-
     # delete recipe ingredients row matching this recipe and ingredient
-    db((db.recipe_ingredients.recipe == recipe_id) & 
-        (db.recipe_ingredients.ingredient == db.ingredients.id)).delete()
+    db(db.recipe_ingredients.id == recipe_ingredient_id).delete()
 
     return "ok"
 
-@action('index')  # aka Discover
+@action('index')
+def index_redirect():
+    redirect(URL(''))
+
+@action('')  # aka Discover
 @action.uses(db, auth, 'index.html', 'layout.html')
 def index():
     rows = get_shared_recipes()
@@ -154,36 +169,34 @@ def profile():
         url_signer=url_signer,
         form=form,
         myrecipes = myrecipes,
-        delete_ingredient_url = URL('delete_ingredient', signer=url_signer),
         load_recipes_url = URL('load_recipes', signer=url_signer),
     
         add_recipe_url = URL('add_recipe', signer=url_signer),
         delete_recipe_url = URL('delete_recipe', signer=url_signer),
-        edit_ingredient_url = URL('edit_ingredient', signer=url_signer),
         edit_recipe_url = URL('edit_recipe', signer=url_signer),
         search_ingredients_url = URL('search_ingredients', signer=url_signer),
-        get_recipe_ingredients_url = URL('get_recipe_ingredients', signer=url_signer),
+
         set_recipe_ingredient_url = URL('set_recipe_ingredient', signer=url_signer),
         delete_recipe_ingredient_url = URL('delete_recipe_ingredient', signer=url_signer),
     )
 
-
-# This is our very first API function.
 @action('load_recipes')
 @action.uses(url_signer.verify(), db)
 def load_recipes():
-    rows = db(db.recipes.m_email == get_user_email()).select().as_list()
+    rows = db(db.recipes.m_email == get_user_email()).select(orderby=~db.recipes.id).as_list()
     
     for row in rows:
         toret =[]
-        for temp in db(db.recipe_ingredients.recipe == row["id"]).select().as_list():
-            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name,'_state': {'amount': "clean", 'ingredient': "clean"},})
+        ingredients = db(db.recipe_ingredients.recipe == row["id"]).select().as_list()
+        for i in range(len(ingredients)):
+            temp = ingredients[i]
+            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name,'_state': {'amount': "clean", 'ingredient': "clean"}, '_idx': i, 'id': temp["id"]})
         row["myingredients"] = toret
     return dict(rows=rows)
 
 @action('load_shared_recipes')
 @action.uses(db)
-def load_recipes():
+def load_shared_recipes():
     rows = get_shared_recipes()
     tags = db(db.tags).select().as_list()
     for tag in tags:
@@ -209,7 +222,7 @@ def add_recipe():
         if temp2:
             temp3 = temp2
         else:
-           temp3 =  db.ingredients.insert(name = temp["ingredient"],avg_price = random.randrange(5,15),)
+           temp3 =  db.ingredients.insert(name = temp["ingredient"])
         finalfinal = db.recipe_ingredients.insert(recipe = id,ingredient = temp3,quantity = temp["amount"],)
         
     return dict(id=id, myingredients= myingredients1)
@@ -221,25 +234,7 @@ def delete_recipe():
     assert id is not None
     db(db.recipes.id == id).delete()
     return "ok"
-@action('delete_ingredient')
-@action.uses(url_signer.verify(), db)
-def delete_ingredient():
-    id = request.params.get('id')
-    refing = request.params.get('ingredient')
-    refamount = request.params.get('amount')
-    assert id is not None
-    rows = db(db.recipe_ingredients.recipe == id).select().as_list()
-    for row in rows:
-        
-        if row['quantity'] == refamount:
-            for temp in db(db.ingredients).select().as_list():
-                if temp['name'] == refing:
-                    
-                    db(db.recipe_ingredients.ingredient == temp['id']).delete()
-                    print(row)
-                    return
-    
-    return "ok"
+
 @action('edit_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def edit_recipe():
@@ -253,6 +248,7 @@ def edit_recipe():
     
     db(db.recipes.id == id).update(**{field: value})
     return "ok"
+
 @action('edit_ingredient', method="POST")
 @action.uses(url_signer.verify(), db)
 def edit_ingredient():
@@ -271,13 +267,11 @@ def edit_ingredient():
         db(db.recipe_ingredients.recipe == id).update(**{'ingredient': newref})
     elif field == "amount":
         db(db.recipe_ingredients.recipe == id).update(**{'quantity': value})
-        pass
-    
     
     return "ok"
 
 def get_shared_recipes(search_term='', search_tags=[]):
-    rows = db((db.recipes.shared == True) & (db.recipes.name.like(f'%{search_term}%'))).select().as_list()
+    rows = db((db.recipes.shared == True) & (db.recipes.name.like(f'%{search_term}%'))).select(orderby=~db.recipes.id).as_list()
     for row in reversed(rows):
         # create ingredients string
         ingredient_rows = db(
@@ -349,75 +343,3 @@ def update_rating():
         rating=rating
     )
     return "ok"
-
-"""
-@action('add_recipe', method=["GET", "POST"])
-@action.uses(db, session, auth.user, 'add_recipe.html')
-def add_recipe():
-    # Insert form: no record= in it.
-    form = Form(db.recipes, csrf_session=session, formstyle=FormStyleBulma)
-    if form.accepted:
-        # We simply redirect; the insertion already happened.
-        redirect(URL('profile'))
-    # Either this is a GET request, or this is a POST but not accepted = with errors.
-    return dict(form=form, url_signer=url_signer)
-
-
-@action('edit_recipe/<recipe_id>', method=["GET", "POST"])
-@action.uses(db, session, auth.user, url_signer.verify(), 'edit_recipe.html')
-def edit_recipe(recipe_id=None):
-    assert recipe_id is not None
-
-    # We read the product being edited from the db.
-    # p = db(db.product.id == recipe_id).select().first()
-    p = db.recipes[recipe_id]
-    if p is None:
-        # Nothing found to be edited!
-        redirect(URL('profile'))
-    # Edit form: it has record=
-    form = Form(db.recipes, record=p, deletable=False,
-                csrf_session=session, formstyle=FormStyleBulma)
-    if form.accepted:
-        # The update already happened!
-        redirect(URL('profile'))
-    return dict(form=form, url_signer=url_signer)
-
-
-@action('delete_recipe/<recipe_id>')
-@action.uses(db, session, auth.user, url_signer.verify())
-def delete_recipe(recipe_id=None):
-    assert recipe_id is not None
-    db(db.ingredients.recipe_id == recipe_id).delete()
-    db(db.recipes.id == recipe_id).delete()
-    redirect(URL('profile'))
-
-
-@action('edit_ingredient/<recipe_id>')
-@action.uses(db, session, auth.user, url_signer.verify(), 'edit_ingredient.html')
-def edit_ingredient(recipe_id=None):
-    assert recipe_id is not None
-    rows = db(db.ingredients.recipe_id == recipe_id).select()
-    return dict(rows=rows, url_signer=url_signer, myid=recipe_id)
-
-
-@action('add_ingredient/<recipe_id>', method=["GET", "POST"])
-@action.uses(db, session, auth.user, url_signer.verify(), 'add_ingredient.html')
-def add_ingredient(recipe_id=None):
-    assert recipe_id is not None
-    # Insert form: no record= in it.
-    form = Form([Field('name', requires=IS_NOT_EMPTY()), Field('avg_price', requires=IS_NOT_EMPTY())], csrf_session=session,
-            formstyle=FormStyleBulma)
-    #myrecipe = db(db.recipe.id ==recipe_id).select().first()
-
-    if form.accepted:
-        db.ingredients.insert(
-            name=form.vars['name'],
-            avg_price=form.vars['avg_price'],
-            recipe_id=recipe_id
-        )
-        # We simply redirect; the insertion already happened.
-        redirect(URL('edit_ingredient',recipe_id, signer=url_signer))
-        #redirect(URL('edit_phones',recipe_id , url_signer))
-    # Either this is a GET request, or this is a POST but not accepted = with errors.
-    return dict(form=form, url_signer=url_signer)
-"""

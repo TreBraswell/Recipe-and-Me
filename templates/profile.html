@@ -8,6 +8,17 @@
   [v-cloak] {
     display: none;
   }
+
+  textarea:read-only {
+    background-color: whitesmoke;
+    border: none;
+    resize: none;
+  }
+
+  .is-recipe-name {
+    font-weight: bold;
+    font-size: x-large;
+  }
 </style>
 
 <head>
@@ -18,222 +29,232 @@
   <h1 class="title has-text-centered"><br>[[=name]]'s Profile</h1>
 </head>
 
-<div class="section mx-6">
+<div class="section">
   <div class="tile is-ancestor">
+    
+    <!-- About me section -->
     <div class="tile is-5 is-parent">
       <div class="tile is-child box section">
-        <h1 class="subtitle">About Me</h1>
+        <h1 class="title">About Me</h1>
         [[=form]]
       </div>
     </div>
+
+    <!-- Recipes section -->
     <div class="tile is-parent">
-      <div class="tile is-child box section">
-        <div class="section" id="vue-target" v-cloak>
+      <div class="tile is-child box section" id="vue-target" v-cloak>
+          <h1 class="title">Recipes</h1>
 
-
-
-          <div class="container block">
-            <h1 class="title">Recipes</h1>
-
-              <div v-for="r in rows">
-                <div class="container block">
-                  <div class="notification is-light">
-                  <div class="form">
-      
-                   
-                    <div class="field">
-                      <label class="label">Name:</label>
-                      <div class="control" :class="{'is-loading': r._state['name'] === 'pending'}">
-                        <input type="text" class="input" v-model="r['name']" :class="{
-                               'is-focused': r._state['name'] === 'edit',
-                               'is-static': r._state['name'] === 'clean',
-                             }" :readonly="r._state['name'] === 'clean'" @click="start_edit(r._idx, 'name')"
-                          @blur="stop_edit(r._idx, 'name')" />
-                      </div>
-                        
-                    </div>
-                    <div class="field">
-                      <label class="label">Steps:</label>
-                      <div class="control" :class="{'is-loading': r._state['steps'] === 'pending'}">
-                        <input type="text" class="input" v-model="r['steps']" :class="{
-                               'is-focused': r._state['steps'] === 'edit',
-                               'is-static': r._state['steps'] === 'clean',
-                             }" :readonly="r._state['steps'] === 'clean'" @click="start_edit(r._idx, 'steps')"
-                          @blur="stop_edit(r._idx, 'steps')" />
-                      </div>
-                    </div>
-                    <div class="field">
-                      <label class="label">Cook Time:</label>
-                      <div class="control" :class="{'is-loading': r._state['cook_time'] === 'pending'}">
-                        <input type="text" class="input" v-model="r['cook_time']" :class="{
-                               'is-focused': r._state['cook_time'] === 'edit',
-                               'is-static': r._state['cook_time'] === 'clean',
-                             }" :readonly="r._state['cook_time'] === 'clean'" @click="start_edit(r._idx, 'cook_time')"
-                          @blur="stop_edit(r._idx, 'cook_time')" />
-                      </div>
-                      
-                    </div>
-                    <div class="field">
-                      <label class="label">Shared:</label>
-                      <div class="control" :class="{'is-loading': r._state['shared'] === 'pending'}">
-                        <input type="checkbox" class="checkbox" v-model="r['shared']" :class="{
-                               'is-focused': r._state['shared'] === 'edit',
-                               'is-static': r._state['shared'] === 'clean',
-                             }" :readonly="r._state['shared'] === 'clean'" @click="start_edit(r._idx, 'shared')"
-                          @blur="stop_edit(r._idx, 'shared')" />
-                      </div>
-                    </div>
-                    <div v-if="r.myingredients.length>0" class="container block">
-                      
-                      <table class="table is-striped is-fullwidth">
-                        <tr>
-                          <th>Ingredients</th>
-                          <th>Amount</th>
-                          <th></th>
-                        </tr>
-                        <tr v-for="temp in r.myingredients">
-
-                          <td>
-                            {{temp.ingredient}}
-                            <div class="control" :class="{'is-loading': temp._state['ingredient'] === 'pending'}">
-                              <input type="text" class="input" v-model="temp['ingredient']" :class="{
-                                     'is-focused': temp._state['ingredient'] === 'edit',
-                                     'is-static': temp._state['ingredient'] === 'clean',
-                                   }" :readonly="temp._state['ingredient'] === 'clean'" @click="start_edit_ingredient(r._idx,temp._idx, 'ingredient')"
-                                @blur="stop_edit_ingredient(r._idx,temp._idx, 'ingredient')" />
-                            </div>
-                          </td>
-                          <td>{{temp.amount}}
-                            <div class="control" :class="{'is-loading': temp._state['amount'] === 'pending'}">
-                              <input type="text" class="input" v-model="temp['amount']" :class="{
-                                     'is-focused': temp._state['amount'] === 'edit',
-                                     'is-static': temp._state['amount'] === 'clean',
-                                   }" :readonly="temp._state['amount'] === 'clean'" @click="start_edit_ingredient(r._idx,temp._idx, 'amount')"
-                                @blur="stop_edit_ingredient(r._idx,temp._idx, 'amount')" />
-                            </div>
-                          </td>
-                          <td>
-                            <button @click="delete_ingredient(r._idx,temp.ingredient,temp.amount)" class="button is-danger">
-                              <i class="fa fa-trash"></i></button>
-                          </td>
-                          
-                        </tr>
-                      </table>
-                       
-
-                  
-                    </div>
-                    
-                  </div>
-                  <button @click="delete_recipe(r._idx)" class="button is-danger">
-                    <i class="fa fa-trash"></i></button>
-                  </div>
-                  
-                </div>
-                
-              </div>
-
+          <!-- Area for creating new recipe -->
+          <div v-if="!add_mode" class="block">
             <button @click="set_add_status(true)" class="button is-primary">
-              <i class="fa fa-plus fa-fw"></i> Add Recipe
+              <i class="fa fa-plus fa-fw"></i> Create New Recipe
             </button>
           </div>
-
-
-
-     
           <div v-if="add_mode" class="container block">
-            <div class="title">Add Recipe</div>
-            <div class="form">
-
-             
-              <div class="field">
-                <label class="label">Name:</label>
-                <div class="control">
-                  <input type="text" v-model="add_name" class="input">
-                </div>
-              </div>
-              <div class="field">
-                <label class="label">Steps:</label>
-                <div class="control">
-                  <textarea class="textarea" v-model="add_steps" placeholder="Write the preparation steps here ..."></textarea>
-                </div>
-              </div>
-              <div class="field">
-                <label class="label">Cook Time:</label>
-                <div class="control">
-                  <input type="text" v-model="add_cook_time" class="input">
-                </div>
-              </div>
-              <div class="field">
-                <label class="label">Shared:</label>
-                <div class="control">
-                  <input type="checkbox" v-model="add_shared" class="checkbox">
-                </div>
-              </div> 
-              <div class="container block">
-                <div v-if="temps.length>0" class="container block">
-                <table class="table is-striped is-fullwidth">
-                  <tr>
-                    <th>Ingredients</th>
-                    <th>Amount</th>
-                    <th></th>
-                  </tr>
-                  <tr v-for="temptemp in temps">
-
-                    <td>
-                      <div class="control" :class="{'is-loading': temptemp._state['ingredient'] === 'pending'}">
-                        <input type="text" class="input" v-model="temptemp['ingredient']" :class="{
-                               'is-focused': temptemp._state['ingredient'] === 'edit',
-                               'is-static': temptemp._state['ingredient'] === 'clean',
-                             }" :readonly="temptemp._state['ingredient'] === 'clean'" @click="start_edit_temp(temptemp._idx, 'ingredient')"
-                          @blur="stop_edit_temp(temptemp._idx, 'ingredient')" />
-                      </div>
-                    </td>
-                    <td>
-                      <div class="control" :class="{'is-loading': temptemp._state['amount'] === 'pending'}">
-                        <input type="text" class="input" v-model="temptemp['amount']" :class="{
-                               'is-focused': temptemp._state['amount'] === 'edit',
-                               'is-static': temptemp._state['amount'] === 'clean',
-                             }" :readonly="temptemp._state['amount'] === 'clean'" @click="start_edit_temp(temptemp._idx, 'amount')"
-                          @blur="stop_edit_temp(temptemp._idx, 'amount')" />
-                      </div>
-                    </td>
-                    <td>
-                      <button @click="delete_temp_ingredient(temptemp.ingredient,temptemp.amount)" class="button is-danger">
-                        <i class="fa fa-trash"></i></button>
-                    </td>
-                  </tr>
-                </table>
-                 </div>
-                <label class="label">Ingredient:</label>
-                <div class="control">
-                  <input type="text" v-model="add_ingredient" class="input" @input="search_ingredients">
+              <div class="notification is-light">
+                <div class="subtitle">Create New Recipe</div>
+              <div class="form">
+                <div class="field">
+                  <div class="control">
+                    <input type="text" v-model="add_name" class="input is-recipe-name" placeholder="Recipe Name ...">
+                  </div>
                 </div>
                 <div class="field">
-                  <label class="label">Amount:</label>
+                  <label class="label">Preparation Steps:</label>
                   <div class="control">
-                    <input type="text" v-model="add_amount" class="input">
+                    <textarea class="textarea" v-model="add_steps" placeholder="Write the preparation steps here ..."></textarea>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="label"> Prep Time:</label>
+                  <div class="control">
+                    <input style="width: 80px" type="number" v-model="add_cook_time" class="input">
+                    <input style="width: 30px" class="input is-static" readonly value="min">
+                  </div>
+                </div>
+                <div class="field is-horizontal">
+                  <label class="label mr-2">Share to other users?:</label>
+                  <div class="field-body">
+                    <div class="control">
+                      <input type="checkbox" v-model="add_shared" class="checkbox">
+                    </div>
+                  </div>
+                </div> 
+                <div class="container block">
+                  <span class="is-size-5 has-text-weight-bold mb-2">Ingredients:</span>
+
+                  <!-- Table of ingredients to be added to new recipe -->
+                  <div v-if="temp_ingredients.length>0" class="container block">
+                    <table class="table is-striped is-fullwidth">
+                      <tr v-for="temptemp in temp_ingredients">
+                        <td>
+                          <div class="control" :class="{'is-loading': temptemp._state['ingredient'] === 'pending'}">
+                            <input type="text" class="input" v-model="temptemp['ingredient']" :class="{
+                                  'is-focused': temptemp._state['ingredient'] === 'edit',
+                                  'is-static': temptemp._state['ingredient'] === 'clean',
+                                }" :readonly="temptemp._state['ingredient'] === 'clean'" @click="start_edit_temp(temptemp._idx, 'ingredient')"
+                              @blur="stop_edit_temp(temptemp._idx, 'ingredient')" 
+                              list="search_ingredients_results" />
+                          </div>
+                        </td>
+                        <td>
+                          <div class="control" :class="{'is-loading': temptemp._state['amount'] === 'pending'}">
+                            <input type="text" class="input" v-model="temptemp['amount']" :class="{
+                                  'is-focused': temptemp._state['amount'] === 'edit',
+                                  'is-static': temptemp._state['amount'] === 'clean',
+                                }" :readonly="temptemp._state['amount'] === 'clean'" @click="start_edit_temp(temptemp._idx, 'amount')"
+                              @blur="stop_edit_temp(temptemp._idx, 'amount')" />
+                          </div>
+                        </td>
+                        <td>
+                          <button @click="delete_temp_ingredient(temptemp.ingredient,temptemp.amount)" class="button is-danger">
+                            <i class="fa fa-trash"></i></button>
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Area for adding ingredients to a new recipe-->
+                  <div class="field">
+                    <label class="label">Name:</label>
+                    <div class="control">
+                      <input type="text" v-model="add_ingredient" class="input" list="search_ingredients_results" placeholder="flour ...">
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label class="label">Quantity:</label>
+                    <div class="control">
+                      <input type="text" v-model="add_amount" class="input" placeholder="1 cup ...">
+                    </div>
+                  </div>
+                  <div class="field">
+                    <div class="control">
+                      <input type="submit" @click="add_temp_ingredient" value="Add Ingredient" class="button is-primary" :disabled="add_ingredient.length == 0 || add_amount.length == 0">
+                    </div>
                   </div>
                 </div>
                 <div class="field">
                   <div class="control">
-                    <input type="submit" @click="add_temp_ingredient" value="Add Ingredient" class="button is-primary">
+                    <input type="submit" @click="add_recipe" value="Create" class="button is-primary" :disabled="add_name.length == 0 || add_steps.length == 0">
+                    <input type="submit" @click="set_add_status(false)" value="Cancel" class="button is-warning">
                   </div>
-                </div>
-            
-              </div>
-              <div class="field">
-                <div class="control">
-                  <input type="submit" @click="add_recipe" value="Add" class="button is-primary">
-                  <input type="submit" @click="set_add_status(false)" value="Cancel" class="button is-warning">
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
+          <!-- List of user's recipes -->
+          <div class="container block">
+              <div v-for="r in recipes" class="block">
+                <div class="container block">
+                  <div class="notification is-light">
+                    <div class="form">
+                      <div class="field">
+                        <div class="control" :class="{'is-loading': r._state['name'] === 'pending'}">
+                          <input type="text" class="input is-recipe-name" v-model="r['name']" :class="{
+                                'is-focused': r._state['name'] === 'edit',
+                                'is-static': r._state['name'] === 'clean',
+                              }" :readonly="r._state['name'] === 'clean'" @click="start_edit(r._idx, 'name')"
+                            @blur="stop_edit(r._idx, 'name')" />
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="label">Preparation Steps:</label>
+                        <div class="control" :class="{'is-loading': r._state['steps'] === 'pending'}">
+                          <textarea class="textarea" v-model="r['steps']" :class="{
+                                'is-focused': r._state['steps'] === 'edit',
+                                'is-static': r._state['steps'] === 'clean',
+                              }" :readonly="r._state['steps'] === 'clean'" @click="start_edit(r._idx, 'steps')"
+                            @blur="stop_edit(r._idx, 'steps')" ></textarea>
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="label">Prep Time:</label>
+                        <div class="control" :class="{'is-loading': r._state['cook_time'] === 'pending'}">
+                          <input style="width: 80px" type="number" class="input" v-model="r['cook_time']" :class="{
+                                'is-focused': r._state['cook_time'] === 'edit',
+                                'is-static': r._state['cook_time'] === 'clean',
+                              }" :readonly="r._state['cook_time'] === 'clean'" @click="start_edit(r._idx, 'cook_time')"
+                            @blur="stop_edit(r._idx, 'cook_time')" />
+                            <input style="width: 30px" class="input is-static" readonly value="min">
+                        </div>
+                      </div>
+                      <div class="field is-horizontal">
+                        <label class="label mr-2">Share to other users?:</label>
+                        <div class="field-body">
+                          <div class="control" :class="{'is-loading': r._state['shared'] === 'pending'}">
+                            <input type="checkbox" class="checkbox" v-model="r['shared']" @change="stop_edit(r._idx, 'shared')" />
+                          </div>
+                        </div>
+                      </div>
+                      <span class="is-size-5 has-text-weight-bold mb-2">Ingredients:</span>
+                      <!-- Table of ingredients for this recipe -->
+                      <div v-if="r.myingredients.length>0" class="container block">
+                        <table class="table is-striped is-fullwidth">
+                          <tr v-for="temp in r.myingredients">
 
+                            <td>
+                              <div class="control" :class="{'is-loading': temp._state['ingredient'] === 'pending'}">
+                                <input type="text" class="input" v-model="temp['ingredient']" :class="{
+                                      'is-focused': temp._state['ingredient'] === 'edit',
+                                      'is-static': temp._state['ingredient'] === 'clean',
+                                    }" :readonly="temp._state['ingredient'] === 'clean'" @click="start_edit_ingredient(r._idx,temp._idx, 'ingredient')"
+                                  @blur="stop_edit_ingredient(r._idx,temp._idx, 'ingredient')" 
+                                  list="search_ingredients_results" />
+                              </div>
+                            </td>
+                            <td>
+                              <div class="control" :class="{'is-loading': temp._state['amount'] === 'pending'}">
+                                <input type="text" class="input" v-model="temp['amount']" :class="{
+                                      'is-focused': temp._state['amount'] === 'edit',
+                                      'is-static': temp._state['amount'] === 'clean',
+                                    }" :readonly="temp._state['amount'] === 'clean'" @click="start_edit_ingredient(r._idx,temp._idx, 'amount')"
+                                  @blur="stop_edit_ingredient(r._idx,temp._idx, 'amount')" />
+                              </div>
+                            </td>
+                            <td>
+                              <button @click="delete_ingredient(r._idx,temp.ingredient,temp.amount, temp.id)" class="button is-danger">
+                                <i class="fa fa-trash"></i></button>
+                            </td>
+                          </tr>
+                        </table>
+                      </div>
+                      <div v-else>
+                        No ingredients.
+                      </div>
 
+                      <!-- Area for adding ingredients to this recipe -->
+                      <div class="field">
+                        <label class="label">Name:</label>
+                        <div class="control">
+                          <input type="text" v-model="r.add_ingredient_edit" class="input" list="search_ingredients_results" placeholder="flour ...">
+                        </div>
+                      </div>
+                      <div class="field">
+                        <label class="label">Quantity:</label>
+                        <div class="control">
+                          <input type="text" v-model="r.add_amount_edit" class="input" placeholder="1 cup ...">
+                        </div>
+                      </div>
+                      <div class="field">
+                        <div class="control">
+                          <input type="submit" @click="add_ingredient_func(r.idx)" value="Add Ingredient" class="button is-primary" :disabled="r.add_ingredient_edit.length == 0 || r.add_amount_edit.length == 0">
+                        </div>
+                      </div>
+
+                      <!-- Button to delete this recipe  -->
+                      <button @click="delete_recipe(r._idx)" class="button is-danger">
+                        <i class="fa fa-trash"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+          <!-- Autocomplete datalist-->
+          <datalist id="search_ingredients_results">
+            <option v-for="s in all_ingredients" v-bind:value="s.name">{{s.name}}</option>
+          </datalist>
       </div>
     </div>
   </div>
@@ -246,9 +267,9 @@
   let add_recipe_url = "[[=XML(add_recipe_url)]]";
   let delete_recipe_url = "[[=XML(delete_recipe_url)]]";
   let edit_recipe_url = "[[=XML(edit_recipe_url)]]";
-  let edit_ingredient_url = "[[=XML(edit_ingredient_url)]]";
-  let delete_ingredient_url = "[[=XML(delete_ingredient_url)]]";
   let search_ingredients_url = "[[=XML(search_ingredients_url)]]";
+  let set_recipe_ingredient_url = "[[=XML(set_recipe_ingredient_url)]]";
+  let delete_recipe_ingredient_url = "[[XML(delete_recipe_ingredient_url)]]";
 </script>
 <script src="js/profile.js"></script>
 [[end]]

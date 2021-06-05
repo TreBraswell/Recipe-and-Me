@@ -7,7 +7,6 @@ This file is provided as an example:
 """
 import os
 from py4web.core import required_folder
-from .private.secret_settings import *
 
 # db settings
 APP_FOLDER = os.path.dirname(__file__)
@@ -19,12 +18,6 @@ DB_URI = "sqlite://storage.db"
 DB_POOL_SIZE = 1
 DB_MIGRATE = True
 DB_FAKE_MIGRATE = False  # maybe?
-
-# Google Cloud Database
-CLOUD_DB_URI = f"google:MySQLdb://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_socket=/cloudsql/{DB_CONNECTION}"
-CLOUD_DB_POOL_SIZE = 1
-CLOUD_DB_MIGRATE = False
-CLOUD_DB_FAKE_MIGRATE = False
 
 # location where static files are stored:
 # STATIC_FOLDER = required_folder(APP_FOLDER, "static")
@@ -70,6 +63,10 @@ OAUTH2OKTA_CLIENT_ID = None
 OAUTH2OKTA_CLIENT_SECRET = None
 
 # single sign on Google (will be used if provided)
+OAUTH2GOOGLE_CLIENT_ID = None
+OAUTH2GOOGLE_CLIENT_SECRET = None
+
+# single sign on Google (will be used if provided)
 OAUTH2FACEBOOK_CLIENT_ID = None
 OAUTH2FACEBOOK_CLIENT_SECRET = None
 
@@ -96,3 +93,9 @@ try:
     from .private.secret_settings import *
 except (ImportError, ModuleNotFoundError):
     pass
+else:
+    # Google Cloud Database
+    CLOUD_DB_URI = f"google:MySQLdb://{DB_USER}:{DB_PASSWORD}@/{DB_NAME}?unix_socket=/cloudsql/{DB_CONNECTION}"
+    CLOUD_DB_POOL_SIZE = 1
+    CLOUD_DB_MIGRATE = False
+    CLOUD_DB_FAKE_MIGRATE = False

@@ -47,13 +47,13 @@
                 [[=globals().get('user').get('last_name')]]
               </a>
               <div class="navbar-dropdown">
-                <a class="navbar-item" href="[[=URL('index')]]">Home</a>
+                <a class="navbar-item" href="[[=URL('')]]">Home</a>
                 <a class="navbar-item" href="[[=URL('profile')]]">My Profile</a>
                 <a class="navbar-item" href="[[=URL('auth/logout')]]">Logout</a>
               </div>
             </div>
             [[else:]]
-            <a class="button is-success" href="[[=URL('auth/plugin/oauth2google/login', vars=dict(next='/Recipe-and-Me'))]]">Log in</a>
+            <a class="button is-success" href="[[=URL('auth/plugin/oauth2google/login', vars=dict(next=URL('')))]]">Log in</a>
             [[pass]]
           </div>
         </div>

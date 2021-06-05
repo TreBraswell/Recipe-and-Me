@@ -9,20 +9,21 @@ let init = (app) => {
 
     // This is the Vue data.
     app.data = {
-        edit_mode : false,
-        edit_id : 0,
         add_mode: false,
         add_name: "",
         add_steps: "",
         add_cook_time: 0,
         add_can_edit : false,
         add_shared: false,
+
         add_ingredient: "",
         add_amount: "",
+
         showinfotextbox: false,
-        rows: [],
-        temps: [],
-        search_ingredients_results: [],
+        recipes: [],
+        temp_ingredients: [],
+
+        all_ingredients: [],
     };
 
     app.enumerate = (a) => {
@@ -38,47 +39,67 @@ let init = (app) => {
     // - edit : the value is being edited
     // - pending : a save is pending.
     app.decorate = (a) => {
-        a.map((e) => {e._state = {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"} ;});
-        return a;
-    }
-    app.add_temp_ingredient = function () {
-        
-            app.vue.temps.push({
-                amount: app.vue.add_amount,
-                ingredient: app.vue.add_ingredient,
-                
-                _state: {amount: "clean", ingredient: "clean"},
-            });
-            app.enumerate(app.vue.temps);
-            app.reset_ingredient_form();
-            
+        a.map((e) => {
+            e._state = {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"} ;
+            e.add_ingredient_edit = "";
+            e.add_amount_edit = "";
+        });
 
+        return a;
     };
+
+    app.add_temp_ingredient = function () {
+        app.vue.temp_ingredients.push({
+            amount: app.vue.add_amount,
+            ingredient: app.vue.add_ingredient,
+            
+            _state: {amount: "clean", ingredient: "clean"},
+        });
+        app.enumerate(app.vue.temp_ingredients);
+        app.reset_ingredient_form();
+    };
+
     app.delete_temp_ingredient = function(ingredient,amount) {
-        
-        for (let i = 0; i < app.vue.temps.length; i++) {
-            if (app.vue.temps[i].ingredient === ingredient && app.vue.temps[i].amount === amount) {
-                app.vue.temps.splice(i, 1);
-                app.enumerate(app.vue.temps);
+        for (let i = 0; i < app.vue.temp_ingredients.length; i++) {
+            if (app.vue.temp_ingredients[i].ingredient === ingredient && app.vue.temp_ingredients[i].amount === amount) {
+                app.vue.temp_ingredients.splice(i, 1);
+                app.enumerate(app.vue.temp_ingredients);
                 break;
             }
         }
     };
-    app.edit_temp_ingredient = function() {
-        
+
+    app.add_ingredient_func = function (recipe_idx) {
+        let recipe = app.vue.recipes[recipe_idx];
+        let ingredient = {"ingredient": recipe.add_ingredient_edit, "amount": recipe.amount}
+        app.vue.recipes[recipe_idx].myingredients.push(ingredient)
+        if (ingredient._state[fn] === "edit") {
+            ingredient._state[fn] = "pending";
+            axios.post(set_recipe_ingredient_url,
+                {
+                    recipe_id: recipe.id,
+                    recipe_ingredient_id: null,
+                    ingredient_name: ingredient.ingredient,
+                    quantity: ingredient.amount,
+                }).then(function (response) {
+                    ingredient.recipe_ingredient_id = response,
+                    ingredient._state[fn] = "clean";
+            });
+            ingredient._state[fn] = "clean";
+        }
     };
 
-    app.delete_ingredient = function(row_idx,ing,amount) {
-        let id = app.vue.rows[row_idx].id;
-        axios.get(delete_ingredient_url, {params: {id: id,ingredient:ing,amount:amount}}).then(function (response) {
-            for (let i = 0; i < app.vue.rows.length; i++) {
-                if (app.vue.rows[i].id === id) {
-                    for(let r= 0; r< app.vue.rows[i].myingredients.length;r++)
-                    {   if(app.vue.rows[i].myingredients[r].ingredient==ing && app.vue.rows[i].myingredients[r].amount == amount)
+    app.delete_ingredient = function(row_idx, ing, amount, recipe_ingredient_id) {
+        let id = app.vue.recipes[row_idx].id;
+        axios.get(delete_recipe_ingredient_url, {params: {recipe_id: id, recipe_ingredient_id:recipe_ingredient_id}})
+        .then(function () {
+            for (let i = 0; i < app.vue.recipes.length; i++) {
+                if (app.vue.recipes[i].id === id) {
+                    for(let r= 0; r< app.vue.recipes[i].myingredients.length;r++)
+                    {   if(app.vue.recipes[i].myingredients[r].ingredient==ing && app.vue.recipes[i].myingredients[r].amount == amount)
                         {
-                            console.log("testtest");
-                            app.vue.rows[i].myingredients.splice(r, 1);
-                            app.enumerate(app.vue.rows[i].myingredients);
+                            app.vue.recipes[i].myingredients.splice(r, 1);
+                            app.enumerate(app.vue.recipes[i].myingredients);
                             break;
                         }
 
@@ -89,9 +110,6 @@ let init = (app) => {
             });
         
     };
-    app.edit_ingredient = function() {
-        
-    };
 
     app.add_recipe = function () {
         axios.post(add_recipe_url,
@@ -100,31 +118,35 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
-                ingredients : app.vue.temps,
+                ingredients : app.vue.temp_ingredients,
             }).then(function (response) {
-            app.vue.rows.push({
+            app.vue.recipes.unshift({
                 id: response.data.id,
                 name: app.vue.add_name,
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
-                myingredients: JSON.parse(JSON.stringify(app.vue.temps)),
+                myingredients: JSON.parse(JSON.stringify(app.vue.temp_ingredients)),
                 _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean",myingredients: "clean",},
             });
-            app.enumerate(app.vue.rows);
+            app.enumerate(app.vue.recipes);
             app.reset_form();
             app.set_add_status(false);
-            app.vue.temps =[];
+            app.vue.temp_ingredients =[];
         });
     };
     
     app.reset_ingredient_form = function () {
-
         app.vue.add_ingredient= "";
         app.vue.add_amount= "";
     };
-    app.reset_form = function () {
 
+    app.reset_ingredient_form = function (row_idx) {
+        app.vue.add_ingredient= "";
+        app.vue.add_amount= "";
+    };
+
+    app.reset_form = function () {
         app.vue.add_name= "";
         app.vue.add_steps= "";
         app.vue.add_cook_time= 0;
@@ -132,13 +154,12 @@ let init = (app) => {
     };
 
     app.delete_recipe = function(row_idx) {
-        
-        let id = app.vue.rows[row_idx].id;
+        let id = app.vue.recipes[row_idx].id;
         axios.get(delete_recipe_url, {params: {id: id}}).then(function (response) {
-            for (let i = 0; i < app.vue.rows.length; i++) {
-                if (app.vue.rows[i].id === id) {
-                    app.vue.rows.splice(i, 1);
-                    app.enumerate(app.vue.rows);
+            for (let i = 0; i < app.vue.recipes.length; i++) {
+                if (app.vue.recipes[i].id === id) {
+                    app.vue.recipes.splice(i, 1);
+                    app.enumerate(app.vue.recipes);
                     break;
                 }
             }
@@ -150,92 +171,78 @@ let init = (app) => {
     };
 
     app.start_edit = function (row_idx, fn) {
-        app.vue.rows[row_idx]._state[fn] = "edit";
+        app.vue.recipes[row_idx]._state[fn] = "edit";
     };
 
     app.stop_edit = function (row_idx, fn) {
-        let row = app.vue.rows[row_idx];
-        if (row._state[fn] === "edit") {
+        let row = app.vue.recipes[row_idx];
+        if (row._state[fn] === "edit" || fn == "shared") {
             row._state[fn] = "pending";
             axios.post(edit_recipe_url,
                 {
                     id: row.id,
                     field: fn,
-                    value: row[fn], // row.first_name
+                    value: row[fn],
                 }).then(function (result) {
                 row._state[fn] = "clean";
             });
         }
         // If I was not editing, there is nothing that needs saving.
     };
-    app.start_edit_ingredient = function (row_idx,row_idx2, fn) {
-        app.vue.rows[row_idx].myingredients[row_idx2]._state[fn] = "edit";
+    app.start_edit_ingredient = function (recipe_idx, ingredient_idx, fn) {
+        app.vue.recipes[recipe_idx].myingredients[ingredient_idx]._state[fn] = "edit";
     };
 
-    app.stop_edit_ingredient = function (row_idx,row_idx2, fn) {
-        let row1 = app.vue.rows[row_idx];
-        let row = app.vue.rows[row_idx].myingredients[row_idx2];
-        if (row._state[fn] === "edit") {
-            row._state[fn] = "pending";
-            axios.post(edit_ingredient_url,
+    app.stop_edit_ingredient = function (recipe_idx, ingredient_idx, fn) {
+        let recipe = app.vue.recipes[recipe_idx];
+        let ingredient = app.vue.recipes[recipe_idx].myingredients[ingredient_idx];
+        if (ingredient._state[fn] === "edit") {
+            ingredient._state[fn] = "pending";
+            axios.post(set_recipe_ingredient_url,
                 {
-                    id: row1.id,
-                    field: fn,
-                    value: row[fn], // row.first_name
-                    ingredient : app.vue.rows[row_idx].myingredients[row_idx2].ingredient,
-                    amount : app.vue.rows[row_idx].myingredients[row_idx2].amount,
-                }).then(function (result) {
-                row._state[fn] = "clean";
+                    recipe_id: recipe.id,
+                    recipe_ingredient_id: ingredient.id,
+                    ingredient_name: ingredient.ingredient,
+                    quantity: ingredient.amount,
+                }).then(function () {
+                    ingredient._state[fn] = "clean";
             });
-            row._state[fn] = "clean";
+            ingredient._state[fn] = "clean";
         }
         // If I was not editing, there is nothing that needs saving.
     };
-    app.start_edit_temp = function (row_idx, fn) {
-        app.vue.temps[row_idx]._state[fn] = "edit";
+    app.start_edit_temp = function (ingredient_idx, fn) {
+        app.vue.temp_ingredients[ingredient_idx]._state[fn] = "edit";
     };
 
-    app.stop_edit_temp = function (row_idx, fn) {
-        let row = app.vue.temps[row_idx];
+    app.stop_edit_temp = function (ingredient_idx, fn) {
+        let row = app.vue.temp_ingredients[ingredient_idx];
         if (row._state[fn] === "edit") {
             row._state[fn] = "pending";
             row._state[fn] = "clean";
-
         }
         // If I was not editing, there is nothing that needs saving.
     };
-    app.search_ingredients = function () {
-        if (app.vue.add_ingredient.length > 0) {
-            axios.get(search_ingredients_url, {params: {q: app.vue.add_ingredient}})
-                .then(function (result) {
-                    let search_results = result.data.ingredients;
-                    app.enumerate(search_results);
-                    app.vue.search_ingredients_results = search_results;
-                });
-        } else {
-            // reset the rows displayed to be everything after we clear out the search bar
-            app.vue.search_ingredients_results = [];
-        }
-    }
 
     // We form the dictionary of all methods, so we can assign them
     // to the Vue app in a single blow.
     app.methods = {
-        add_temp_ingredient: app.add_temp_ingredient,
+        
         add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,
         delete_recipe: app.delete_recipe,
+
         start_edit_ingredient: app.start_edit_ingredient,
         stop_edit_ingredient: app.stop_edit_ingredient,
         start_edit: app.start_edit,
         stop_edit: app.stop_edit,
+        add_ingredient_func: app.add_ingredient_func,
+        delete_ingredient: app.delete_ingredient,
+
+        add_temp_ingredient: app.add_temp_ingredient,
         start_edit_temp: app.start_edit_temp,
         stop_edit_temp: app.stop_edit_temp,
         delete_temp_ingredient: app.delete_temp_ingredient,
-        edit_temp_ingredient: app.edit_temp_ingredient,
-        delete_ingredient: app.delete_ingredient,
-        edit_ingredient: app.edit_ingredient,
-        search_ingredients: app.search_ingredients,
     };
 
     // This creates the Vue instance.
@@ -248,12 +255,16 @@ let init = (app) => {
     // And this initializes it.
     // Generally, this will be a network call to the server to
     // load the data.
-    // For the moment, we 'load' the data from a string.
     app.init = () => {
         axios.get(load_recipes_url).then(function (response) {
-          app.vue.rows = app.decorate(app.enumerate(response.data.rows));
-            //app.vue.temps = app.decorate(app.enumerate(response.data.temps));
+          app.vue.recipes = app.decorate(app.enumerate(response.data.rows));
        });
+       axios.get(search_ingredients_url, {params: {q: ""}})
+            .then(function (response) {
+                let search_results = response.data.ingredients;
+                app.enumerate(search_results);
+                app.vue.all_ingredients = search_results;
+            });
     };
 
     // Call to the initializer.

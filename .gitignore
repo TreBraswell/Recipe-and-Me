@@ -3,4 +3,4 @@ __pycache__/*
 databases/*
 !databases/README.md
 .vscode
-private/
+private/secret_settings.py
