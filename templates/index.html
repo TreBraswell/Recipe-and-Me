@@ -134,13 +134,30 @@
                            <div class="column">
                                <!-- Star area -->
                               <div @mouseout="stars_out(row._idx)" class="has-text-right">
-                                 Rating: {{row.rating}}  <br />
-                                 <span @mouseover="stars_over(row._idx, star_idx)"
-                                       @click="set_stars(row._idx, star_idx)"
-                                       v-for="star_idx in [1, 2, 3, 4, 5]">
-                                    <i v-if="star_idx <= row.num_stars_display" class="fa fa-star"></i>
-                                    <i v-if="star_idx > row.num_stars_display" class="fa fa-star-o"></i>
+                                 <span v-if="(row.raters.length < 1)">
+                                    No ratings yet.
                                  </span>
+                                 <span v-else>
+                                    [[if globals().get('user'):]]Average r[[else:]]R[[pass]]ating:
+                                    <span class="is-size-7">({{row.raters.length}} user{{row.raters.length != 1 ? "s" : ""}})</span> 
+                                    <span v-for="star_idx in [1, 2, 3, 4, 5]">
+                                       <i v-if="star_idx <= row.total_rating / row.raters.length" class="fa fa-star"></i>
+                                       <i v-if="star_idx > row.total_rating / row.raters.length" class="fa fa-star-o"></i>
+                                    </span>
+                                 </span>
+                                 <br />
+                                 [[if globals().get('user'):]]
+                                 <span>
+                                    Your rating:
+                                    <span @mouseover="stars_over(row._idx, star_idx)"
+                                          @click="set_stars(row._idx, star_idx)"
+                                          v-for="star_idx in [1, 2, 3, 4, 5]">
+                                       <i v-if="star_idx <= row.num_stars_display" class="fa fa-star"></i>
+                                       <i v-if="star_idx > row.num_stars_display" class="fa fa-star-o"></i>
+                                    </span>
+                                 </span>
+                                 <br />
+                                 [[pass]]
                               </div>
 
                               <p class="image is-4by3">
