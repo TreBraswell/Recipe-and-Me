@@ -9,6 +9,7 @@
     display: none;
   }
 
+  /* make textarea look less like an input field when it is read-only */
   textarea:read-only {
     background-color: whitesmoke;
     border: none;
@@ -53,7 +54,7 @@
           </div>
           <div v-if="add_mode" class="container block">
               <div class="notification is-light">
-                <div class="subtitle">Create New Recipe</div>
+                <p class="subtitle">Create New Recipe</p>
               <div class="form">
                 <div class="field">
                   <div class="control">
@@ -70,7 +71,7 @@
                   <label class="label"> Prep Time:</label>
                   <div class="control">
                     <input style="width: 80px" type="number" v-model="add_cook_time" class="input">
-                    <input style="width: 30px" class="input is-static" readonly value="min">
+                    <input style="width: 30px" class="input is-static" readonly value="min" tabindex="-1">
                   </div>
                 </div>
                 <div class="field is-horizontal">
@@ -119,24 +120,24 @@
                   <div class="field">
                     <label class="label">Name:</label>
                     <div class="control">
-                      <input type="text" v-model="add_ingredient" class="input" list="search_ingredients_results" placeholder="flour ...">
+                      <input type="text" v-model="add_ingredient" class="input" list="search_ingredients_results" placeholder="Select or type an ingredient ...">
                     </div>
                   </div>
                   <div class="field">
                     <label class="label">Quantity:</label>
                     <div class="control">
-                      <input type="text" v-model="add_amount" class="input" placeholder="1 cup ...">
+                      <input type="text" v-model="add_amount" class="input" placeholder="1 cup, 2 pieces, etc. ...">
                     </div>
                   </div>
                   <div class="field">
                     <div class="control">
-                      <input type="submit" @click="add_temp_ingredient" value="Add Ingredient" class="button is-primary" :disabled="add_ingredient.length == 0 || add_amount.length == 0">
+                      <input type="submit" @click="add_temp_ingredient" value="Add Ingredient" class="button is-primary" :disabled="add_ingredient.length == 0">
                     </div>
                   </div>
                 </div>
                 <div class="field">
                   <div class="control">
-                    <input type="submit" @click="add_recipe" value="Create" class="button is-primary" :disabled="add_name.length == 0 || add_steps.length == 0">
+                    <input type="submit" @click="add_recipe" value="Create" class="button is-primary" :disabled="add_name.length == 0">
                     <input type="submit" @click="set_add_status(false)" value="Cancel" class="button is-warning">
                   </div>
                 </div>
@@ -150,6 +151,8 @@
                 <div class="container block">
                   <div class="notification is-light">
                     <div class="form">
+
+                      <!-- Regular one-to-one recipe fields -->
                       <div class="field">
                         <div class="control" :class="{'is-loading': r._state['name'] === 'pending'}">
                           <input type="text" class="input is-recipe-name" v-model="r['name']" :class="{
@@ -177,7 +180,7 @@
                                 'is-static': r._state['cook_time'] === 'clean',
                               }" :readonly="r._state['cook_time'] === 'clean'" @click="start_edit(r._idx, 'cook_time')"
                             @blur="stop_edit(r._idx, 'cook_time')" />
-                            <input style="width: 30px" class="input is-static" readonly value="min">
+                            <input style="width: 30px" class="input is-static" readonly value="min" tabindex="-1">
                         </div>
                       </div>
                       <div class="field is-horizontal">
@@ -188,8 +191,18 @@
                           </div>
                         </div>
                       </div>
-                      <span class="is-size-5 has-text-weight-bold mb-2">Ingredients:</span>
+                      <div class="field">
+                        <label class="label">Image URL:</label>
+                        <div class="control" :class="{'is-loading': r._state['image_url'] === 'pending'}">
+                          <input type="text" class="input" v-model="r['image_url']" :class="{
+                                'is-focused': r._state['image_url'] === 'edit',
+                                'is-static': r._state['image_url'] === 'clean',
+                              }" :readonly="r._state['image_url'] === 'clean'" @click="start_edit(r._idx, 'image_url')"
+                            @blur="stop_edit(r._idx, 'image_url')" />
+                        </div>
+                      </div>
                       <!-- Table of ingredients for this recipe -->
+                      <span class="is-size-5 has-text-weight-bold mb-2">Ingredients:</span>
                       <div v-if="r.myingredients.length>0" class="container block">
                         <table class="table is-striped is-fullwidth">
                           <tr v-for="temp in r.myingredients">
@@ -220,32 +233,52 @@
                           </tr>
                         </table>
                       </div>
-                      <div v-else>
+                      <div v-else class="container block">
                         No ingredients.
                       </div>
 
                       <!-- Area for adding ingredients to this recipe -->
-                      <div class="field">
-                        <label class="label">Name:</label>
-                        <div class="control">
-                          <input type="text" v-model="r.add_ingredient_edit" class="input" list="search_ingredients_results" placeholder="flour ...">
+                      <div v-if="!r.add_mode" class="block">
+                        <div class="field">
+                          <div class="control">
+                            <button @click="r.add_mode = true" class="button is-primary">
+                              <i class="fa fa-plus fa-fw"></i> Add Ingredient
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <div class="field">
-                        <label class="label">Quantity:</label>
-                        <div class="control">
-                          <input type="text" v-model="r.add_amount_edit" class="input" placeholder="1 cup ...">
+                      <div v-else class="block">
+                        <p class="subtitle">Add New Ingredient</p>
+                        <div class="field">
+                          <label class="label">Name:</label>
+                          <div class="control">
+                            <input type="text" v-model="r.add_ingredient_edit" class="input" list="search_ingredients_results" placeholder="Select or type an ingredient ...">
+                          </div>
                         </div>
-                      </div>
-                      <div class="field">
-                        <div class="control">
-                          <input type="submit" @click="add_ingredient_func(r.idx)" value="Add Ingredient" class="button is-primary" :disabled="r.add_ingredient_edit.length == 0 || r.add_amount_edit.length == 0">
+                        <div class="field">
+                          <label class="label">Quantity:</label>
+                          <div class="control">
+                            <input type="text" v-model="r.add_amount_edit" class="input" placeholder="1 cup, 2 pieces, etc. ...">
+                          </div>
+                        </div>
+                        <div class="field">
+                          <div class="control">
+                            <input type="submit" @click="add_ingredient_func(r._idx)" value="Add Ingredient" class="button is-primary" :disabled="r.add_ingredient_edit.length == 0">
+                            <button @click="r.add_mode = false" class="button is-warning">
+                              Cancel
+                            </button>
+                          </div>
                         </div>
                       </div>
 
                       <!-- Button to delete this recipe  -->
-                      <button @click="delete_recipe(r._idx)" class="button is-danger">
-                        <i class="fa fa-trash"></i></button>
+                      <div class="field">
+                        <div class="control">
+                          <button @click="delete_recipe(r._idx)" class="button is-danger">
+                            <i class="fa fa-trash"></i>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -269,7 +302,7 @@
   let edit_recipe_url = "[[=XML(edit_recipe_url)]]";
   let search_ingredients_url = "[[=XML(search_ingredients_url)]]";
   let set_recipe_ingredient_url = "[[=XML(set_recipe_ingredient_url)]]";
-  let delete_recipe_ingredient_url = "[[XML(delete_recipe_ingredient_url)]]";
+  let delete_recipe_ingredient_url = "[[=URL('delete_recipe_ingredient', signer=url_signer)]]";
 </script>
 <script src="js/profile.js"></script>
 [[end]]

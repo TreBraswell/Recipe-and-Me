@@ -40,9 +40,18 @@ let init = (app) => {
     // - pending : a save is pending.
     app.decorate = (a) => {
         a.map((e) => {
-            e._state = {name: "clean", steps: "clean", cook_time:"clean", shared: "clean"} ;
+            e._state = {name: "clean", steps: "clean", cook_time:"clean", shared: "clean", image_url: "clean"};
             e.add_ingredient_edit = "";
             e.add_amount_edit = "";
+            e.add_mode = false;
+        });
+
+        return a;
+    };
+
+    app.decorate_ingredients = (a) => {
+        a.map((e) => {
+            e._state = {"amount": "clean", "ingredient": "clean"};
         });
 
         return a;
@@ -71,27 +80,34 @@ let init = (app) => {
 
     app.add_ingredient_func = function (recipe_idx) {
         let recipe = app.vue.recipes[recipe_idx];
-        let ingredient = {"ingredient": recipe.add_ingredient_edit, "amount": recipe.amount}
-        app.vue.recipes[recipe_idx].myingredients.push(ingredient)
-        if (ingredient._state[fn] === "edit") {
-            ingredient._state[fn] = "pending";
-            axios.post(set_recipe_ingredient_url,
-                {
-                    recipe_id: recipe.id,
-                    recipe_ingredient_id: null,
-                    ingredient_name: ingredient.ingredient,
-                    quantity: ingredient.amount,
-                }).then(function (response) {
-                    ingredient.recipe_ingredient_id = response,
-                    ingredient._state[fn] = "clean";
-            });
-            ingredient._state[fn] = "clean";
-        }
+        console.log(recipe_idx)
+        console.log(recipe)
+        let ingredient = {"ingredient": recipe.add_ingredient_edit, "amount": recipe.add_amount_edit};
+        
+        axios.post(set_recipe_ingredient_url,
+            {
+                recipe_id: recipe.id,
+                recipe_ingredient_id: ingredient.id,
+                ingredient_name: ingredient.ingredient,
+                quantity: ingredient.amount,
+            }).then(function (response) {
+                ingredient.id = response,
+                ingredient._state = {amount: "clean", ingredient: "clean"},
+                recipe.myingredients.push(ingredient);
+                app.enumerate(recipe.myingredients);
+
+                // reset add ingredients form for the recipe
+                recipe.add_ingredient_edit = "";
+                recipe.add_amount_edit = "";
+                recipe.add_mode = false;
+
+        });
     };
 
     app.delete_ingredient = function(row_idx, ing, amount, recipe_ingredient_id) {
         let id = app.vue.recipes[row_idx].id;
-        axios.get(delete_recipe_ingredient_url, {params: {recipe_id: id, recipe_ingredient_id:recipe_ingredient_id}})
+
+        axios.post(delete_recipe_ingredient_url, {recipe_id: id, recipe_ingredient_id: recipe_ingredient_id})
         .then(function () {
             for (let i = 0; i < app.vue.recipes.length; i++) {
                 if (app.vue.recipes[i].id === id) {
@@ -102,13 +118,10 @@ let init = (app) => {
                             app.enumerate(app.vue.recipes[i].myingredients);
                             break;
                         }
-
                     }
-                    
                 }
             }
             });
-        
     };
 
     app.add_recipe = function () {
@@ -127,9 +140,16 @@ let init = (app) => {
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
                 myingredients: JSON.parse(JSON.stringify(app.vue.temp_ingredients)),
-                _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean",myingredients: "clean",},
+                _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean", image_url: "clean", myingredients: "clean",},
+                add_ingredient_edit: "",
+                add_amount_edit: "",
+                add_mode: false,
             });
-            app.enumerate(app.vue.recipes);
+            
+            app.vue.recipes[0].myingredients = app.decorate_ingredients(app.enumerate(app.vue.recipes[0].myingredients));
+
+            app.vue.recipes = app.decorate(app.enumerate(app.vue.recipes));
+
             app.reset_form();
             app.set_add_status(false);
             app.vue.temp_ingredients =[];
@@ -155,7 +175,7 @@ let init = (app) => {
 
     app.delete_recipe = function(row_idx) {
         let id = app.vue.recipes[row_idx].id;
-        axios.get(delete_recipe_url, {params: {id: id}}).then(function (response) {
+        axios.post(delete_recipe_url, {id: id}).then(function (response) {
             for (let i = 0; i < app.vue.recipes.length; i++) {
                 if (app.vue.recipes[i].id === id) {
                     app.vue.recipes.splice(i, 1);
@@ -201,7 +221,7 @@ let init = (app) => {
             axios.post(set_recipe_ingredient_url,
                 {
                     recipe_id: recipe.id,
-                    recipe_ingredient_id: ingredient.id,
+                    recipe_ingredient_id: null,
                     ingredient_name: ingredient.ingredient,
                     quantity: ingredient.amount,
                 }).then(function () {
@@ -257,12 +277,16 @@ let init = (app) => {
     // load the data.
     app.init = () => {
         axios.get(load_recipes_url).then(function (response) {
+          for (recipe of response.data.rows) {
+            recipe.myingredients = app.decorate_ingredients(app.enumerate(recipe.myingredients));
+          }
+
           app.vue.recipes = app.decorate(app.enumerate(response.data.rows));
        });
+
        axios.get(search_ingredients_url, {params: {q: ""}})
             .then(function (response) {
                 let search_results = response.data.ingredients;
-                app.enumerate(search_results);
                 app.vue.all_ingredients = search_results;
             });
     };

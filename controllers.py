@@ -55,7 +55,7 @@ def search_ingredients():
     ingredients = db(db.ingredients.name.like(f'%{q}%')).select(orderby=db.ingredients.name).as_list()
     return dict(ingredients=ingredients)
 
-@action('get_recipe_ingredients/<recipe_id>', method=["GET"])
+@action('get_recipe_ingredients/<recipe_id>', method="GET")
 @action.uses(db)
 def get_recipe_ingredients(recipe_id):
     # get recipe ingredients names out from the database
@@ -68,7 +68,7 @@ def get_recipe_ingredients(recipe_id):
 @action.uses(url_signer.verify(), db)
 def set_recipe_ingredient():
     recipe_id =request.json.get('recipe_id')
-    recipe_ingredient_id =request.json.get('recipe_ingredient_id')
+    recipe_ingredient_id = request.json.get('recipe_ingredient_id')
     ingredient_name = request.json.get('ingredient_name')
     quantity = request.json.get('quantity')
 
@@ -90,25 +90,26 @@ def update_or_insert_recipe_ingredient(recipe_id, recipe_ingredients_id, ingredi
         # if we have a recipe_ingredients id, update that entry
         db.recipe_ingredients.update_or_insert(
             (db.recipe_ingredients.id == recipe_ingredients_id),
-            ingredient=ingredient_id, 
+            recipe=recipe_id,
+            ingredient=ingredient_id,
             quantity=quantity)
         response = "ok"
     else:
         # otherwise, update or insert a recipe_ingredients entry with an unknown id
         db.recipe_ingredients.update_or_insert(
-            ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)), 
+            ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)),
+            recipe=recipe_id,
             ingredient=ingredient_id, 
             quantity=quantity)
-        response = db.recipe_ingredients(
-            (db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)).select(
-                db.recipe_ingredients.id)
+        
+        recipe_ingredient_id = db(((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id))).select().first().id
 
-    return response
+    return recipe_ingredients_id
 
-@action('delete_recipe_ingredient', method=["POST"])
+@action('delete_recipe_ingredient', method="POST")
 @action.uses(url_signer.verify(), db)
-def delete_recipe_ingredient(recipe_id, ingredient_name):
-    recipe_id =request.json.get('recipe_id')
+def delete_recipe_ingredient():
+    recipe_id = request.json.get('recipe_id')
     recipe_ingredient_id = request.json.get('recipe_ingredient_id') 
 
     if get_user_email() != db.recipes[recipe_id].m_email:
@@ -187,10 +188,9 @@ def load_recipes():
     
     for row in rows:
         toret =[]
-        ingredients = db(db.recipe_ingredients.recipe == row["id"]).select().as_list()
-        for i in range(len(ingredients)):
-            temp = ingredients[i]
-            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name,'_state': {'amount': "clean", 'ingredient': "clean"}, '_idx': i, 'id': temp["id"]})
+        recipe_ingredients = db(db.recipe_ingredients.recipe == row["id"]).select().as_list()
+        for temp in recipe_ingredients:
+            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name, 'id': temp["id"]})
         row["myingredients"] = toret
     return dict(rows=rows)
 
@@ -223,14 +223,14 @@ def add_recipe():
             temp3 = temp2
         else:
            temp3 =  db.ingredients.insert(name = temp["ingredient"])
-        finalfinal = db.recipe_ingredients.insert(recipe = id,ingredient = temp3,quantity = temp["amount"],)
+        temp["id"] = db.recipe_ingredients.insert(recipe = id,ingredient = temp3,quantity = temp["amount"],)
         
-    return dict(id=id, myingredients= myingredients1)
+    return dict(id=id, myingredients=myingredients1)
 
-@action('delete_recipe')
+@action('delete_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def delete_recipe():
-    id = request.params.get('id')
+    id = request.json.get('id')
     assert id is not None
     db(db.recipes.id == id).delete()
     return "ok"
@@ -329,7 +329,7 @@ def get_shared_recipes(search_term='', search_tags=[]):
                 rows.remove(row)
     return rows
 
-@action('update_rating', method='POST')
+@action('update_rating', method="POST")
 @action.uses(url_signer.verify(), db, auth.user)
 def update_rating():
     """Sets the rating for an image."""
