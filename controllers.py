@@ -414,9 +414,14 @@ def get_shared_recipes(search_term='', search_tags=[]):
             row["ingredients_rows"].append(ingredient)
 
             for ingredient_row in ingredient_rows[1:]:
-                ingredient_name = db.ingredients[ingredient_row['ingredient']].name
+                ingredient_name = db.ingredients[
+                    ingredient_row['ingredient']].name
                 s += f', {ingredient_name}'
-                ingredient = {"name": ingredient_name, "quantity": ingredient_row.quantity}
+                ingredient = {
+                    "name": ingredient_name,
+                    "quantity": ingredient_row.quantity
+                }
+
                 row["ingredients_rows"].append(ingredient)
         row["ingredients"] = s
         
