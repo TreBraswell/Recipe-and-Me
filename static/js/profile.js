@@ -46,7 +46,7 @@ let init = (app) => {
             e.add_ingredient_edit = "";
             e.add_amount_edit = "";
             e.add_mode = false;
-            e.image_url = e.image_url
+            e.image_url = e.image_url != null ? e.image_url : ""
         });
 
         return a;
@@ -83,8 +83,6 @@ let init = (app) => {
 
     app.add_ingredient_func = function (recipe_idx) {
         let recipe = app.vue.recipes[recipe_idx];
-        console.log(recipe_idx)
-        console.log(recipe)
         let ingredient = {"ingredient": recipe.add_ingredient_edit, "amount": recipe.add_amount_edit};
         
         axios.post(set_recipe_ingredient_url,
@@ -94,9 +92,19 @@ let init = (app) => {
                 ingredient_name: ingredient.ingredient,
                 quantity: ingredient.amount,
             }).then(function (response) {
-                ingredient.id = response,
+                ingredient.id = response.data.recipe_ingredient_id,
                 ingredient._state = {amount: "clean", ingredient: "clean"},
-                recipe.myingredients.push(ingredient);
+
+                recipe_ingredient_idx = recipe.myingredients.findIndex(x => x.ingredient == ingredient.ingredient);
+                if (recipe_ingredient_idx == -1) {
+                    // append new ingredient entry to our local list
+                    recipe.myingredients.push(ingredient);
+                }
+                else {
+                    // replace existing ingredient entry if user is trying to add same ingredient again
+                    Vue.set(app.vue.recipes[recipe_idx].myingredients[recipe_ingredient_idx], "amount", ingredient.amount);
+                }
+
                 app.enumerate(recipe.myingredients);
 
                 // reset add ingredients form for the recipe
@@ -227,11 +235,12 @@ let init = (app) => {
             axios.post(set_recipe_ingredient_url,
                 {
                     recipe_id: recipe.id,
-                    recipe_ingredient_id: null,
+                    recipe_ingredient_id: ingredient.id,
                     ingredient_name: ingredient.ingredient,
                     quantity: ingredient.amount,
-                }).then(function () {
+                }).then(function (response) {
                     ingredient._state[fn] = "clean";
+                    ingredient.id = response.recipe_ingredient_id;
             });
             ingredient._state[fn] = "clean";
         }

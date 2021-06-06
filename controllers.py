@@ -14,15 +14,16 @@ If path == 'index' it can be omitted:
 
 The path follows the bottlepy syntax.
 
-@action.uses('generic.html')  indicates that the action uses the generic.html template
-@action.uses(session)         indicates that the action uses the session
-@action.uses(db)              indicates that the action uses the db
-@action.uses(T)               indicates that the action uses the i18n & pluralization
-@action.uses(auth.user)       indicates that the action requires a logged in user
-@action.uses(auth)            indicates that the action requires the auth object
+@action.uses('generic.html')  ... the action uses the generic.html template
+@action.uses(session)         ... the action uses the session
+@action.uses(db)              ... the action uses the db
+@action.uses(T)               ... the action uses the i18n & pluralization
+@action.uses(auth.user)       ... the action requires a logged in user
+@action.uses(auth)            ... the action requires the auth object
 
 session, db, T, auth, and tempates are examples of Fixtures.
-Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app will result in undefined behavior
+Warning: Fixtures MUST be declared with @action.uses({fixtures}) else your app 
+will result in undefined behavior
 """
 import time
 
@@ -64,7 +65,11 @@ def get_recipe_ingredients(recipe_id):
     # get recipe ingredients names out from the database
     rows = db((db.recipe_ingredients.recipe == recipe_id) &
         (db.recipe_ingredients.ingredient == db.ingredients.id)
-        ).select(db.ingredients.name, db.recipe_ingredients.quantity).as_list()
+        ).select(
+            db.recipe_ingredients.id, 
+            db.ingredients.name, 
+            db.recipe_ingredients.quantity
+        ).as_list()
 
     return dict(rows=rows)
 
@@ -79,36 +84,40 @@ def set_recipe_ingredient():
     if get_user_email() != db.recipes[recipe_id].m_email:
         return "Access denied"
     
-    # get ID of existing ingredient row in ingredients table, or insert a new row for the ingredient
-    ingredient = db(db.ingredients.name == ingredient_name).select(db.ingredients.id).first()
+    # get ID of existing row in ingredients table, or insert a new row
+    ingredient = db(db.ingredients.name == ingredient_name
+        ).select(db.ingredients.id).first()
+
     ingredient_id = ingredient.id if ingredient is not None else None
 
     if ingredient_id is None:
         ingredient_id = db.ingredients.insert(name=ingredient_name)
 
     # update or insert to our row in recipe ingredients
-    if recipe_ingredients_id is not None:
+    if recipe_ingredient_id is not None:
         # if we have a recipe_ingredients id, update that entry
         db.recipe_ingredients.update_or_insert(
-            (db.recipe_ingredients.id == recipe_ingredients_id),
+            (db.recipe_ingredients.id == recipe_ingredient_id),
             recipe=recipe_id,
             ingredient=ingredient_id,
             quantity=quantity)
 
-        response = "ok"
+        response = dict(recipe_ingredient_id=recipe_ingredient_id, ok="ok")
     else:
-        # otherwise, update or insert a recipe_ingredients entry with an unknown id
+        # otherwise, update/insert a recipe_ingredients entry with an unknown id
         db.recipe_ingredients.update_or_insert(
-            ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id)),
+            ((db.recipe_ingredients.recipe == recipe_id) & 
+            (db.recipe_ingredients.ingredient == ingredient_id)),
             recipe=recipe_id,
             ingredient=ingredient_id, 
             quantity=quantity)
         
         recipe_ingredient_id = db(
-            ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id))
+            ((db.recipe_ingredients.recipe == recipe_id) & 
+            (db.recipe_ingredients.ingredient == ingredient_id))
             ).select().first().id
 
-    return recipe_ingredients_id
+    return dict(recipe_ingredient_id=recipe_ingredient_id)
 
 @action('delete_recipe_ingredient', method="POST")
 @action.uses(url_signer.verify(), db)
@@ -157,7 +166,8 @@ def delete_tag():
     tag_id = tag.id if tag is not None else None
 
     # delete recipe tags row matching this recipe and tag
-    db((db.recipe_tags.recipe == recipe_id) & (db.recipe_tags.tag == tag_id)).delete()
+    db((db.recipe_tags.recipe == recipe_id) & 
+        (db.recipe_tags.tag == tag_id)).delete()
 
     return "ok"
 
@@ -221,25 +231,33 @@ def profile():
         edit_recipe_url = URL('edit_recipe', signer=url_signer),
         search_ingredients_url = URL('search_ingredients', signer=url_signer),
 
-        set_recipe_ingredient_url = URL('set_recipe_ingredient', signer=url_signer),
-        delete_recipe_ingredient_url = URL('delete_recipe_ingredient', signer=url_signer),
+        set_recipe_ingredient_url = URL(
+            'set_recipe_ingredient', signer=url_signer),
+        delete_recipe_ingredient_url = URL(
+            'delete_recipe_ingredient', signer=url_signer),
     )
 
 @action('load_recipes')
 @action.uses(url_signer.verify(), db)
 def load_recipes():
-    rows = db(db.recipes.m_email == get_user_email()).select(orderby=~db.recipes.id).as_list()
+    rows = db(db.recipes.m_email == get_user_email()
+        ).select(orderby=~db.recipes.id).as_list()
     
     for row in rows:
-        toret =[]
-        recipe_ingredients = db(db.recipe_ingredients.recipe == row["id"]).select().as_list()
-        for temp in recipe_ingredients:
-            toret.append({
-                "amount": temp["quantity"], 
-                "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name, 
-                "id": temp["id"]}
-            )
-        row["myingredients"] = toret
+        myingredients = []
+        recipe_ingredients = db(db.recipe_ingredients.recipe == row["id"]
+            ).select().as_list()
+
+        for ingredient in recipe_ingredients:
+            ingredient_name = db(db.ingredients.id == ingredient["ingredient"]
+                ).select().first().name, 
+
+            myingredients.append({
+                "amount": ingredient["quantity"], 
+                "ingredient": ingredient_name,
+                "id": ingredient["id"]
+            })
+        row["myingredients"] = myingredients
 
     return dict(rows=rows)
 
@@ -257,7 +275,7 @@ def load_shared_recipes():
 @action('add_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def add_recipe():
-    id = db.recipes.insert(
+    recipe_id = db.recipes.insert(
         name=request.json.get('name'),
         steps=request.json.get('steps'),
         cook_time=request.json.get('cook_time'),
@@ -265,65 +283,64 @@ def add_recipe():
         image_url=request.json.get('image_url'),
     )
 
-    myingredients1 = request.json.get('ingredients')
+    recipe_ingredients = request.json.get('ingredients')
     
-    for temp in myingredients1: 
+    for recipe_ingredient in recipe_ingredients:
+        # get ingredient id if the ingredient is already known to the app
+        ingredient_id = db(
+            db.ingredients.name == recipe_ingredient["ingredient"]
+            ).select().first()
+
+        # if not found, insert new ingredient (visible to every user and
+        # reusable in every future recipe)
+        if ingredient_id is None:
+            ingredient_id =  db.ingredients.insert(
+               name = recipe_ingredient["ingredient"]
+            )
+
+        # link the ingredient and recipe with a new recipe-ingredient entry
+        recipe_ingredient["id"] = db.recipe_ingredients.insert(
+            recipe = recipe_id, 
+            ingredient = ingredient_id, 
+            quantity = recipe_ingredient["amount"],
+        )
         
-        temp2 = db(db.ingredients.name == temp["ingredient"]).select().first()
-        if temp2:
-            temp3 = temp2
-        else:
-           temp3 =  db.ingredients.insert(name = temp["ingredient"])
-        temp["id"] = db.recipe_ingredients.insert(recipe = id,ingredient = temp3,quantity = temp["amount"],)
-        
-    return dict(id=id, myingredients=myingredients1)
+    return dict(id=recipe_id, myingredients=recipe_ingredients)
 
 @action('delete_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def delete_recipe():
-    id = request.json.get('id')
-    assert id is not None
-    db(db.recipes.id == id).delete()
+    recipe_id = request.json.get('id')
+
+    if get_user_email() != db.recipes[recipe_id].m_email:
+        return "Access denied"
+
+    assert recipe_id is not None
+    db(db.recipes.id == recipe_id).delete()
 
     return "ok"
 
 @action('edit_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def edit_recipe():
-    # Updates the db record.
-    id = request.json.get("id")
+    recipe_id = request.json.get("id")
     field = request.json.get("field")
     value = request.json.get("value")
+
+    if get_user_email() != db.recipes[recipe_id].m_email:
+        return "Access denied"
 
     if field == "myingredients":
         return "Missing field"
     
-    db(db.recipes.id == id).update(**{field: value})
-    return "ok"
-
-@action('edit_ingredient', method="POST")
-@action.uses(url_signer.verify(), db)
-def edit_ingredient():
-    # Updates the db record.
-    id = request.json.get("id")
-    field = request.json.get("field")
-    value = request.json.get("value")
-    amou = request.json.get("amount")
-    ingre = request.json.get("ingredient")
-    if field == 'ingredient' and db(db.ingredients.name == value).select().first() == None:
-        
-        newref = db.ingredients.insert(
-            name = value,
-            avg_price = random.randrange(5,15),
-        )
-        db(db.recipe_ingredients.recipe == id).update(**{'ingredient': newref})
-    elif field == "amount":
-        db(db.recipe_ingredients.recipe == id).update(**{'quantity': value})
-    
+    db(db.recipes.id == recipe_id).update(**{field: value})
     return "ok"
 
 def get_shared_recipes(search_term='', search_tags=[]):
-    rows = db((db.recipes.shared == True) & (db.recipes.name.like(f'%{search_term}%'))).select(orderby=~db.recipes.id).as_list()
+    rows = db((db.recipes.shared == True) & 
+        (db.recipes.name.like(f'%{search_term}%'))
+        ).select(orderby=~db.recipes.id).as_list()
+
     for row in reversed(rows):
         # create ingredients string
         ingredient_rows = db(
@@ -336,6 +353,7 @@ def get_shared_recipes(search_term='', search_tags=[]):
             s = ingredient_name
             ingredient = {"name": ingredient_name, "quantity": row0.quantity}
             row["ingredients_rows"].append(ingredient)
+
             for ingredient_row in ingredient_rows[1:]:
                 ingredient_name = db.ingredients[ingredient_row['ingredient']].name
                 s += f', {ingredient_name}'

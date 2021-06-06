@@ -87,7 +87,7 @@
                                     </div>
                                     <div class="column is-narrow">
                                         <figure class="image is-64x64">
-                                            <img :src="r['image_url']" alt="Recipe image"
+                                            <img :src="add_image_url" alt="Recipe image"
                                                     onerror="this.src='https\:\/\/bulma.io/images/placeholders/128x128.png'" class="image is-64x64">
                                         </figure>
                                     </div>
@@ -286,7 +286,7 @@
                                                 </div>
                                                 <div class="field">
                                                     <div class="control">
-                                                        <input type="submit" @click="add_ingredient_func(r._idx)" value="Add Ingredient" class="button is-primary" :disabled="r.add_ingredient_edit.length == 0">
+                                                        <input type="submit" @click="add_ingredient_func(r._idx)" value="Add Ingredient" class="button is-primary" :disabled="r.add_ingredient_edit.length == 0 || r.add_amount_edit.length == 0">
                                                         <button @click="r.add_mode = false" class="button">
                                                             Cancel
                                                         </button>
