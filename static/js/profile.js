@@ -44,6 +44,7 @@ let init = (app) => {
             e.add_ingredient_edit = "";
             e.add_amount_edit = "";
             e.add_mode = false;
+            e.image_url = e.image_url != "" ? e.image_url : "https://bulma.io/images/placeholders/1280x960.png"
         });
 
         return a;
@@ -100,7 +101,7 @@ let init = (app) => {
                 recipe.add_ingredient_edit = "";
                 recipe.add_amount_edit = "";
                 recipe.add_mode = false;
-
+                recipe.image_url = recipe.image_url != "" ? recipe.image_url : "https://bulma.io/images/placeholders/1280x960.png"
         });
     };
 

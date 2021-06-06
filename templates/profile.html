@@ -1,9 +1,6 @@
 [[extend 'layout.html']]
-
-<!DOCTYPE html>
-
-
-<html lang="en">
+[[block page_head]]
+<title>Profile - Recipe and Me</title>
 <style>
   [v-cloak] {
     display: none;
@@ -21,16 +18,16 @@
     font-size: x-large;
   }
 </style>
+[[end]]
 
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile</title>
-  <h1 class="title has-text-centered"><br>[[=name]]'s Profile</h1>
-</head>
+<div class="section pt-4">
 
-<div class="section">
+  <!-- Header -->
+  <header class="block">
+    <h1 class="title">Profile</h1>
+  </header>
+
+  <!-- Main page content -->
   <div class="tile is-ancestor">
     
     <!-- About me section -->
@@ -49,12 +46,12 @@
           <!-- Area for creating new recipe -->
           <div v-if="!add_mode" class="block">
             <button @click="set_add_status(true)" class="button is-primary">
-              <i class="fa fa-plus fa-fw"></i> Create New Recipe
+              <i class="fa fa-plus fa-fw"></i> Create Recipe
             </button>
           </div>
           <div v-if="add_mode" class="container block">
               <div class="notification is-light">
-                <p class="subtitle">Create New Recipe</p>
+                <p class="subtitle">Create Recipe</p>
               <div class="form">
                 <div class="field">
                   <div class="control">
@@ -138,7 +135,7 @@
                 <div class="field">
                   <div class="control">
                     <input type="submit" @click="add_recipe" value="Create" class="button is-primary" :disabled="add_name.length == 0">
-                    <input type="submit" @click="set_add_status(false)" value="Cancel" class="button is-warning">
+                    <input type="submit" @click="set_add_status(false)" value="Cancel" class="button">
                   </div>
                 </div>
               </div>
@@ -264,7 +261,7 @@
                         <div class="field">
                           <div class="control">
                             <input type="submit" @click="add_ingredient_func(r._idx)" value="Add Ingredient" class="button is-primary" :disabled="r.add_ingredient_edit.length == 0">
-                            <button @click="r.add_mode = false" class="button is-warning">
+                            <button @click="r.add_mode = false" class="button">
                               Cancel
                             </button>
                           </div>
@@ -291,10 +288,10 @@
       </div>
     </div>
   </div>
+</div>
 
-</html>
+<!-- Loads the profile-specific js for Vue -->
 [[block page_scripts]]
-<!-- Loads the index-specific js for Vue -->
 <script>
   let load_recipes_url = "[[=XML(load_recipes_url)]]";
   let add_recipe_url = "[[=XML(add_recipe_url)]]";

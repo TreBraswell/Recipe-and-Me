@@ -9,6 +9,11 @@
     href="data:image/x-icon;base64,AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAPAAAAAA==" />
   <link rel="stylesheet" href="css/bulma.css">
   <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.css">
+  <style>
+    .navbar {
+      border-bottom: solid 1px gainsboro;
+    }
+  </style>
   [[block page_head]]
   <!-- individual pages can customize header here -->[[end]]
 </head>
@@ -16,9 +21,10 @@
 <body>
 
   <!-- Navigation bar -->
-  <nav class="navbar is-dark" role="navigation" aria-label="main navigation">
+  <nav class="navbar is-white" role="navigation" aria-label="main navigation">
     <div class="navbar-brand">
-      <a class="navbar-item" href="[[=URL('index')]]">
+      <a class="navbar-item" href="[[=URL('')]]">
+        Recipe and Me
       </a>
 
 
@@ -33,30 +39,21 @@
 
     <div id="the-navbar-menu" class="navbar-menu">
       <div class="navbar-start">
+        
         [[block page_menu_items]]
         <!-- individual pages can add menu items here -->[[end]]
       </div>
 
       <div class="navbar-end">
-        <div class="navbar-item">
-          <div class="buttons">
-            [[if globals().get('user'):]]
-            <div class="navbar-item has-dropdown is-hoverable">
-              <a class="navbar-link is-primary">
-                [[=globals().get('user').get('first_name')]]
-                [[=globals().get('user').get('last_name')]]
-              </a>
-              <div class="navbar-dropdown">
-                <a class="navbar-item" href="[[=URL('')]]">Home</a>
-                <a class="navbar-item" href="[[=URL('profile')]]">My Profile</a>
-                <a class="navbar-item" href="[[=URL('auth/logout')]]">Logout</a>
-              </div>
-            </div>
-            [[else:]]
-            <a class="button is-success" href="[[=URL('auth/plugin/oauth2google/login', vars=dict(next=URL('')))]]">Log in</a>
-            [[pass]]
-          </div>
+        [[if globals().get('user'):]]
+        <a class="navbar-item" href="[[=URL('profile')]]"><span class="mr-1">Profile</span><span class="is-size-7">([[=globals().get('user').get('first_name')]]
+          [[=globals().get('user').get('last_name')]])</span></a>
+        <a class="navbar-item" href="[[=URL('auth/logout')]]">Log out</a>
+        [[else:]]
+        <div class="navbar-item buttons">
+          <a class="button is-success" href="[[=URL('auth/plugin/oauth2google/login', vars=dict(next=URL('')))]]">Log in</a>
         </div>
+        [[pass]]
       </div>
     </div>
   </nav>
@@ -65,7 +62,16 @@
   [[include]]
   <!-- end of HTML inserted by extending template -->
   <footer class="footer">
-    <div class="content has-text-centered">
+    <div class="content has-text-centered is-size-7">
+      <p>
+        <strong>Recipe and Me</strong> by Tre Braswell, Nathan Ma, Ray Nelson, and Konstantin Sarychev.
+      </p>
+      <p>
+        Made in April–June 2021 for the class <a href="https://learn-py4web.github.io/">Web Applications (taught by Luca de Alfaro)</a> at UC Santa Cruz.
+      </p>
+      <p>
+        Made with <a href="https://py4web.com/">Py4Web</a>, <a href="https://vuejs.org/">Vue.js</a>, and <a href="https://bulma.io/">Bulma.</a>
+      </p>
     </div>
   </footer>
 </body>

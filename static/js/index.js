@@ -9,12 +9,11 @@ let init = (app) => {
 
     // This is the Vue data.
     app.data = {
-        // Complete as you see fit.
         query: "",
         query_tags: [],
         tags: [],
-        rows: [],
-        rows_data: [],
+        recipes: [],
+        recipes_data: [],
         modals:[],
         user: -1,
     };
@@ -26,19 +25,20 @@ let init = (app) => {
         return a;
     };
     
-    app.complete = (rows) => {
-        // Initializes useful fields of rows.
-        rows.map((row) => {
-            row.rating = 0;
-            row.num_stars_display = 0;
+    app.complete = (recipes) => {
+        // Initializes useful fields of recipe rows.
+        recipes.map((recipe) => {
+            recipe.rating = 0;
+            recipe.num_stars_display = 0;
+            recipe.image_url = recipe.image_url != "" ? recipe.image_url : "https://bulma.io/images/placeholders/1280x960.png"
         });
-        for ( i = 0; i <rows.length; i++){
-            if (rows[i].total_rating === 0){
-                rows[i].rating = 0;
+        for ( i = 0; i < recipes.length; i++){
+            if (recipes[i].total_rating === 0){
+                recipes[i].rating = 0;
             }
             else{
-                rows[i].rating = rows[i].total_rating/(rows[i].raters.length);
-                rows[i].num_stars_display = rows[i].rating;
+                recipes[i].rating = recipes[i].total_rating/(recipes[i].raters.length);
+                recipes[i].num_stars_display = recipes[i].rating;
             }
         }
         
@@ -46,8 +46,8 @@ let init = (app) => {
     };
     
     app.set_stars = (row_idx, num_stars) => {
-        if (!app.vue.rows[row_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
-            let row = app.vue.rows[row_idx];
+        if (!app.vue.recipes[row_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
+            let row = app.vue.recipes[row_idx];
             row.total_rating = row.total_rating + num_stars;
             row.raters.push(app.vue.user);
             row.rating = (row.total_rating)/(row.raters.length);
@@ -58,13 +58,13 @@ let init = (app) => {
     };
     
     app.stars_out = (row_idx) => {
-        let row = app.vue.rows[row_idx];
+        let row = app.vue.recipes[row_idx];
         row.num_stars_display = row.rating;
     };
 
     app.stars_over = (row_idx, num_stars) => {
-        if (!app.vue.rows[row_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
-            let row = app.vue.rows[row_idx];
+        if (!app.vue.recipes[row_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
+            let row = app.vue.recipes[row_idx];
             row.num_stars_display = num_stars;
         }
     };
@@ -73,14 +73,14 @@ let init = (app) => {
         if (app.vue.query.length > 0 || app.vue.query_tags.length > 0) {
             axios.get(search_url, {params: {q: app.vue.query, t: app.vue.query_tags.map(e => e.name).join(',')}})
                 .then(function (result) {
-                    let rows = result.data.rows;
-                    app.enumerate(rows);
-                    app.complete(rows);
-                    app.vue.rows = rows;
+                    let recipes = result.data.rows;
+                    app.enumerate(recipes);
+                    app.complete(recipes);
+                    app.vue.recipes = recipes;
                 });
         } else {
-            // reset the rows displayed to be everything after we clear out the search bar
-            app.vue.rows = app.vue.rows_data;
+            // reset the recipe rows displayed to be everything after we clear out the search bar
+            app.vue.recipes = app.vue.recipes_data;
         }
     }
 
@@ -146,20 +146,19 @@ let init = (app) => {
 
     // And this initializes it.
     app.init = () => {
-        // Put here any initialization code.
-        // Typically this is a server GET call to load the data.
+        // Initialization code to load the recipe data
         axios.get(load_shared_recipes_url).then(function (response) {
-            let rows = response.data.rows;
-            app.enumerate(rows);
-            app.complete(rows);
-            app.vue.rows = rows;
+            let recipes = response.data.rows;
+            app.enumerate(recipes);
+            app.complete(recipes);
+            app.vue.recipes = recipes;
             
-            app.vue.rows_data = app.vue.rows;
+            app.vue.recipes_data = app.vue.recipes;
             app.vue.tags = response.data.tags ? app.enumerate(response.data.tags) : []
              if (response.data.current_user !== null){
                 app.vue.user = response.data.current_user;
             }
-            for (var i = 0; i < app.vue.rows.length; i++){
+            for (var i = 0; i < app.vue.recipes.length; i++){
                 app.vue.modals.push(false);
             }
         });
@@ -170,5 +169,4 @@ let init = (app) => {
 };
 
 // This takes the (empty) app object, and initializes it,
-// putting all the code i
 init(app);
