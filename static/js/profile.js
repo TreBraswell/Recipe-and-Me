@@ -10,11 +10,13 @@ let init = (app) => {
     // This is the Vue data.
     app.data = {
         add_mode: false,
+        add_can_edit : false,
+
         add_name: "",
         add_steps: "",
         add_cook_time: 0,
-        add_can_edit : false,
         add_shared: false,
+        add_image_url: "",
 
         add_ingredient: "",
         add_amount: "",
@@ -44,7 +46,7 @@ let init = (app) => {
             e.add_ingredient_edit = "";
             e.add_amount_edit = "";
             e.add_mode = false;
-            e.image_url = e.image_url != "" ? e.image_url : "https://bulma.io/images/placeholders/1280x960.png"
+            e.image_url = e.image_url
         });
 
         return a;
@@ -132,6 +134,7 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
+                image_url: app.vue.add_image_url,
                 ingredients : app.vue.temp_ingredients,
             }).then(function (response) {
             app.vue.recipes.unshift({
@@ -140,6 +143,7 @@ let init = (app) => {
                 steps: app.vue.add_steps,
                 cook_time: app.vue.add_cook_time,
                 shared: app.vue.add_shared,
+                image_url: app.vue.add_image_url,
                 myingredients: JSON.parse(JSON.stringify(app.vue.temp_ingredients)),
                 _state: {name: "clean", steps: "clean", cook_time:"clean", shared: "clean", image_url: "clean", myingredients: "clean",},
                 add_ingredient_edit: "",
@@ -168,10 +172,11 @@ let init = (app) => {
     };
 
     app.reset_form = function () {
-        app.vue.add_name= "";
-        app.vue.add_steps= "";
-        app.vue.add_cook_time= 0;
-        app.vue.add_shared= false;
+        app.vue.add_name = "";
+        app.vue.add_steps = "";
+        app.vue.add_cook_time = 0;
+        app.vue.add_shared = false;
+        app.vue.add_image_url = "";
     };
 
     app.delete_recipe = function(row_idx) {
@@ -248,7 +253,6 @@ let init = (app) => {
     // We form the dictionary of all methods, so we can assign them
     // to the Vue app in a single blow.
     app.methods = {
-        
         add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,
         delete_recipe: app.delete_recipe,

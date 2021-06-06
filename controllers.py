@@ -212,6 +212,7 @@ def add_recipe():
         steps=request.json.get('steps'),
         cook_time=request.json.get('cook_time'),
         shared=request.json.get('shared'),
+        image_url=request.json.get('image_url'),
     )
     finaltemp = []
     myingredients1 = request.json.get('ingredients')

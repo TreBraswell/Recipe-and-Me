@@ -10,8 +10,19 @@
   <link rel="stylesheet" href="css/bulma.css">
   <link rel="stylesheet" href="font-awesome-4.7.0/css/font-awesome.css">
   <style>
+    /* Hides Vue components while they're loading */
+    [v-cloak] {
+      display: none;
+    }
+
+    /* Bottom border on navbar so it doesn't blend into the page too much */
     .navbar {
       border-bottom: solid 1px gainsboro;
+    }
+
+    /* Clips images to fill their parent to aid in visual consistency */
+    img {
+      object-fit: cover;
     }
   </style>
   [[block page_head]]

@@ -2,200 +2,192 @@
 [[block page_head]]
 <title>Recipe and Me</title>
 <style>
-   [v-cloak] {
-         display: none;
-   }
+    /* Tile hover effect */
+    /* https://nestedsoftware.com/2019/11/05/card-with-expand-on-hover-effect-2ccm.200941.html */
+    .tile.is-child {
+        transition: all .3s ease;
+    }
+    .tile.is-child:hover {
+        transform: translate3D(0,-1px,0) scale(1.02);
+        box-shadow: 8px 28px 50px rgba(39,44,49,.07), 1px 6px 12px rgba(39,44,49,.04);
+        transition: all .2s ease;
+        cursor: pointer;
+    }
 
-   img {
-      object-fit: cover;
-   }
-
-   /* Tile hover effect */
-   /* https://nestedsoftware.com/2019/11/05/card-with-expand-on-hover-effect-2ccm.200941.html */
-   .tile.is-child {
-      transition: all .3s ease;
-   }
-   .tile.is-child:hover {
-      transform: translate3D(0,-1px,0) scale(1.02);
-      box-shadow: 8px 28px 50px rgba(39,44,49,.07), 1px 6px 12px rgba(39,44,49,.04);
-      transition: all .2s ease;
-      cursor: pointer;
-   }
-
-   /* Switch column order on mobile (for modal sidebar and image) */
-   /* https://stackoverflow.com/questions/49953907/switch-columns-in-bulma-css */
-   @media (max-width: 768px) { 
-      .columns.is-mobile-reversed {
-         display: flex;
-         flex-direction: column-reverse;
-      }
-   }
+    /* Switch column order on mobile (for modal sidebar and image) */
+    /* https://stackoverflow.com/questions/49953907/switch-columns-in-bulma-css */
+    @media (max-width: 768px) { 
+        .columns.is-mobile-reversed {
+            display: flex;
+            flex-direction: column-reverse;
+        }
+    }
 </style>
 [[end]]
 
 <div class="section pt-4" id="vue-target" v-cloak>
 
-   <!-- Header area with title and search bar -->
-   <header class="level">
-      <h1 class="title">Discover Recipes</h1>
-      <div class="field has-addons">
+    <!-- Header area with title and search bar -->
+    <header class="level">
+        <h1 class="title">Discover Recipes</h1>
+        <div class="field has-addons">
 
-         <!-- Search bar -->
-         <div class="control has-icons-left">
-            <input type="search" class="input" placeholder="Search..." v-model="query" @input="search"/>
-            <span class="icon is-small is-left">
-               <i class="fa fa-fw fa-search"></i>
+            <!-- Search bar -->
+            <div class="control has-icons-left">
+                <input type="search" class="input" placeholder="Search..." v-model="query" @input="search"/>
+                <span class="icon is-small is-left">
+                    <i class="fa fa-fw fa-search"></i>
+                </span>
+            </div>
+
+            <!-- Tag filter dropdown -->
+            <div class="dropdown control is-right is-hoverable">
+                <div class="dropdown-trigger">
+                    <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
+                        <span class="icon is-small is-left">
+                            <i class="fa fa-fw fa-filter"></i>
+                        </span>
+                        <span class="is-hidden-mobile">Filter by&nbsp;</span>
+                        <span>Tags</span>
+                        <span class="icon is-small">
+                        <i class="fa fa-fw fa-angle-down" aria-hidden="true"></i>
+                        </span>
+                    </button>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content">
+                        <div v-for="tag in tags" class="dropdown-item has-text-right is-clickable" @click="toggle_search_tag(tag._idx)" :class="{ 'has-background-primary': tag.is_active }">
+                            <span class="tag is-rounded is-medium is-capitalized is-primary is-light">{{tag.name}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Area for tags which are currently filtering the search -->   
+    <div v-if="query_tags.length > 0">
+        <span class="tags" >
+            <span class="tag is-rounded is-medium is-capitalized has-background-white">Filtering by Tags: </span>
+            <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in query_tags">
+                {{tag.name}}
+                <button class="delete is-small" @click="remove_search_tag(tag._idx ? tag._idx : 0)"></button>
             </span>
-         </div>
-
-         <!-- Tag filter dropdown -->
-         <div class="dropdown control is-right is-hoverable">
-            <div class="dropdown-trigger">
-               <button class="button" aria-haspopup="true" aria-controls="dropdown-menu">
-                  <span class="icon is-small is-left">
-                     <i class="fa fa-fw fa-filter"></i>
-                  </span>
-                  <span class="is-hidden-mobile">Filter by&nbsp;</span>
-                  <span>Tags</span>
-                  <span class="icon is-small">
-                  <i class="fa fa-fw fa-angle-down" aria-hidden="true"></i>
-                  </span>
-               </button>
-            </div>
-            <div class="dropdown-menu" id="dropdown-menu" role="menu">
-               <div class="dropdown-content">
-                  <div v-for="tag in tags" class="dropdown-item has-text-right is-clickable" @click="toggle_search_tag(tag._idx)" v-bind:class="{ 'has-background-primary': tag.is_active }">
-                     <span class="tag is-rounded is-medium is-capitalized is-primary is-light">{{tag.name}}</span>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </div>
-   </header>
-
-   <!-- Area for tags which are currently filtering the search -->   
-   <div v-if="query_tags.length > 0">
-      <span class="tags" >
-         <span class="tag is-rounded is-medium is-capitalized has-background-white">Filtering by Tags: </span>
-         <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in query_tags">
-            {{tag.name}}
-            <button class="delete is-small" @click="remove_search_tag(tag._idx ? tag._idx : 0)"></button>
-         </span>
-      </span>
-   </div>
-      
-   <!-- Main content area: recipe list for browsing and search results -->
-   <div class="tile is-ancestor is-flex-wrap-wrap">
-      <div v-for="recipe in recipes" class="tile is-parent is-4">
-         <div class="tile is-child card" @click="set_modal(true , recipe._idx)">
-            <header class="card-header">
-               <p class="card-header-title is-centered">
-                  {{recipe['name']}}
-               </p>
-            </header>
-            <div class="card-image">
-               <figure class="image is-4by3">
-                  <img v-bind:src="recipe['image_url']" alt="Recipe image">
-               </figure>
-            </div>
-            <div class="card-content">
-               <div class="content">
-                  <div class="tags">
-                     <span class="tag is-rounded is-medium is-capitalized" v-for="ingredient in recipe['ingredients_rows']">
-                        {{ingredient['name']}}
-                     </span>
-                     <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in recipe['tag_rows']">
-                        {{tag}}
-                     </span>
-                  </div>
-               </div>
-            </div> 
-         </div>
-         <div v-if="modals[recipe._idx]" class="modal is-active">
-            <div class="modal-background" @click.stop="set_modal(false, recipe._idx)"></div>
-               <div class="modal-card">
-                  <header class="modal-card-head">
-                     <p class="modal-card-title">{{recipe['name']}}</p>
-                  </header>
-                  <section class="modal-card-body">
-                     <div class="columns is-mobile-reversed">
-                        <div class="column is-one-third ">
-                           <p class="is-size-5">Ingredients</p>
-                           <div>
-                              <div class="notification p-1 m-1" v-for="ingredient in recipe['ingredients_rows']">
-                                 <span class="is-capitalized">{{ingredient['name']}}</span>
-                                 <br>
-                                 <span class="is-size-7">{{ingredient['quantity']}}</span>
-                              </div>
-                           </div>
-                           <p class="is-size-5">Tags</p>
-                           <div class="tags">
-                              <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in recipe['tag_rows']">
-                                 {{tag}}
-                              </span>
-                           </div>
-                           <p class="is-size-5">Prep Time</p>
-                           <p>
-                              <span class="icon"><i class="fa fa-fw fa-clock-o"></i></span>
-                              
-                              {{recipe['cook_time']}} min
-                           </p>
+        </span>
+    </div>
+        
+    <!-- Main content area: recipe list for browsing and search results -->
+    <div class="tile is-ancestor is-flex-wrap-wrap">
+        <div v-for="recipe in recipes" class="tile is-parent is-4">
+            <div class="tile is-child card" @click="set_modal(true , recipe._idx)">
+                <header class="card-header">
+                    <p class="card-header-title is-centered">
+                        {{recipe['name']}}
+                    </p>
+                </header>
+                <div class="card-image">
+                    <figure class="image is-4by3">
+                        <img :src="recipe['image_url']" alt="Recipe image">
+                    </figure>
+                </div>
+                <div class="card-content">
+                    <div class="content">
+                        <div class="tags">
+                            <span class="tag is-rounded is-medium is-capitalized" v-for="ingredient in recipe['ingredients_rows']">
+                                {{ingredient['name']}}
+                            </span>
+                            <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in recipe['tag_rows']">
+                                {{tag}}
+                            </span>
                         </div>
-                        <div class="column">
+                    </div>
+                </div> 
+            </div>
+            <div v-if="modals[recipe._idx]" class="modal is-active">
+                <div class="modal-background" @click.stop="set_modal(false, recipe._idx)"></div>
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">{{recipe['name']}}</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="columns is-mobile-reversed">
+                                <div class="column is-one-third ">
+                                    <p class="is-size-5">Ingredients</p>
+                                    <div>
+                                        <div class="notification p-1 m-1" v-for="ingredient in recipe['ingredients_rows']">
+                                            <span class="is-capitalized">{{ingredient['name']}}</span>
+                                            <br>
+                                            <span class="is-size-7">{{ingredient['quantity']}}</span>
+                                        </div>
+                                    </div>
+                                    <p class="is-size-5">Tags</p>
+                                    <div class="tags">
+                                        <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in recipe['tag_rows']">
+                                            {{tag}}
+                                        </span>
+                                    </div>
+                                    <p class="is-size-5">Prep Time</p>
+                                    <p>
+                                        <span class="icon"><i class="fa fa-fw fa-clock-o"></i></span>
+                                        
+                                        {{recipe['cook_time']}} min
+                                    </p>
+                                </div>
+                                <div class="column">
 
-                           <!-- Star area -->
-                           <div @mouseout="stars_out(recipe._idx)" class="has-text-right">
+                                    <!-- Star area -->
+                                    <div @mouseout="stars_out(recipe._idx)" class="has-text-right">
 
-                              <!-- The average star rating of all users for this recipe -->
-                              <span v-if="(recipe.raters.length < 1)">
-                                 No ratings yet.
-                              </span>
-                              <span v-else>
-                                 [[if globals().get('user'):]]Average r[[else:]]R[[pass]]ating:
-                                 <span class="is-size-7">({{recipe.raters.length}} user{{recipe.raters.length != 1 ? "s" : ""}})</span> 
-                                 <span v-for="star_idx in [1, 2, 3, 4, 5]">
-                                    <i v-if="star_idx <= recipe.total_rating / recipe.raters.length" class="fa fa-star"></i>
-                                    <i v-if="star_idx > recipe.total_rating / recipe.raters.length" class="fa fa-star-o"></i>
-                                 </span>
-                              </span>
-                              <br />
+                                        <!-- The average star rating of all users for this recipe -->
+                                        <span v-if="(recipe.raters.length < 1)">
+                                            No ratings yet.
+                                        </span>
+                                        <span v-else>
+                                            [[if globals().get('user'):]]Average r[[else:]]R[[pass]]ating:
+                                            <span class="is-size-7">({{recipe.raters.length}} user{{recipe.raters.length != 1 ? "s" : ""}})</span> 
+                                            <span v-for="star_idx in [1, 2, 3, 4, 5]">
+                                                <i v-if="star_idx <= recipe.total_rating / recipe.raters.length" class="fa fa-star"></i>
+                                                <i v-if="star_idx > recipe.total_rating / recipe.raters.length" class="fa fa-star-o"></i>
+                                            </span>
+                                        </span>
+                                        <br />
 
-                              [[if globals().get('user'):]]
-                              <!-- The individual star rating of the current user for this recipe -->
-                              <span>
-                                 Your rating:
-                                 <span @mouseover="stars_over(recipe._idx, star_idx)"
-                                       @click="set_stars(recipe._idx, star_idx)"
-                                       v-for="star_idx in [1, 2, 3, 4, 5]">
-                                    <i v-if="star_idx <= recipe.num_stars_display" class="fa fa-star"></i>
-                                    <i v-if="star_idx > recipe.num_stars_display" class="fa fa-star-o"></i>
-                                 </span>
-                              </span>
-                              <br />
-                              [[pass]]
-                           </div>
+                                        [[if globals().get('user'):]]
+                                        <!-- The individual star rating of the current user for this recipe -->
+                                        <span>
+                                            Your rating:
+                                            <span @mouseover="stars_over(recipe._idx, star_idx)"
+                                                    @click="set_stars(recipe._idx, star_idx)"
+                                                    v-for="star_idx in [1, 2, 3, 4, 5]">
+                                                <i v-if="star_idx <= recipe.num_stars_display" class="fa fa-star"></i>
+                                                <i v-if="star_idx > recipe.num_stars_display" class="fa fa-star-o"></i>
+                                            </span>
+                                        </span>
+                                        <br />
+                                        [[pass]]
+                                    </div>
 
-                           <p class="image is-4by3">
-                              <img v-bind:src="recipe['image_url']" alt="Recipe image">
-                           </p>
-                        </div>
-                     </div>
-                     
-                     <p class="is-size-5">Preparation Steps</p>
-                     <p>{{recipe['steps']}}</p>
-                  </section>
+                                    <p class="image is-4by3">
+                                        <img :src="recipe['image_url']" alt="Recipe image">
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <p class="is-size-5">Preparation Steps</p>
+                            <p>{{recipe['steps']}}</p>
+                        </section>
 
-                  <!-- This footer can be added in if we implement saving recipes or viewing other users' profiles -->
-                  <!-- <footer class="modal-card-foot">
-                     <button class="button">Save Recipe for Later</button>
-                     <button class="button">View Creator's Profile</button>  
-                  </footer> -->
-               </div>
-               <button class="modal-close is-large"  aria-label="close" @click.stop="set_modal(false, recipe._idx)"></button>
-         </div>
-      </div>
-   </div>
-   </div>
+                        <!-- This footer can be added in if we implement saving recipes or viewing other users' profiles -->
+                        <!-- <footer class="modal-card-foot">
+                            <button class="button">Save Recipe for Later</button>
+                            <button class="button">View Creator's Profile</button>  
+                        </footer> -->
+                    </div>
+                    <button class="modal-close is-large"  aria-label="close" @click.stop="set_modal(false, recipe._idx)"></button>
+            </div>
+        </div>
+    </div>
+    </div>
 </div>
 
 <!-- Loads the index-specific js for Vue -->
