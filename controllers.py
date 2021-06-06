@@ -43,6 +43,12 @@ url_signer = URLSigner(session)
 @action('search_recipes')
 @action.uses(db)
 def search_recipes():
+    """
+    Returns a list of all the shared recipes which have a title containing
+    the search query and which are tagged with all of the tag filters bring used
+    in the search.
+    """
+
     query = request.params.get("q")
     tag = request.params.get("t")
     tag = [] if tag is None or tag == '' else tag.split(',')
@@ -53,6 +59,12 @@ def search_recipes():
 @action('search_ingredients')
 @action.uses(db)
 def search_ingredients():
+    """
+    Returns a list of ingredients, found by searching for ingredients that
+    contain the string passed in, or simply returns all ingredients if
+    there is no search query.
+    """
+
     query = request.params.get("q")
     ingredients = db(db.ingredients.name.like(f'%{query}%')
         ).select(orderby=db.ingredients.name).as_list()
@@ -62,7 +74,10 @@ def search_ingredients():
 @action('get_recipe_ingredients/<recipe_id>', method="GET")
 @action.uses(db)
 def get_recipe_ingredients(recipe_id):
-    # get recipe ingredients names out from the database
+    """
+    Returns a list of all the ingredients for a recipe and their quantities.
+    """
+
     rows = db((db.recipe_ingredients.recipe == recipe_id) &
         (db.recipe_ingredients.ingredient == db.ingredients.id)
         ).select(
@@ -76,6 +91,13 @@ def get_recipe_ingredients(recipe_id):
 @action('set_recipe_ingredient', method=["POST"])
 @action.uses(url_signer.verify(), db)
 def set_recipe_ingredient():
+    """
+    Sets a recipe-ingredient's recipe, ingredient and quantity, for one of a
+    user's existing recipes. Can only be used by the creator of the recipe.
+    Reuses existing ingredient rows if they are in the database to avoid
+    ingredient duplication.
+    """
+
     recipe_id = request.json.get('recipe_id')
     recipe_ingredient_id = request.json.get('recipe_ingredient_id')
     ingredient_name = request.json.get('ingredient_name')
@@ -122,6 +144,11 @@ def set_recipe_ingredient():
 @action('delete_recipe_ingredient', method="POST")
 @action.uses(url_signer.verify(), db)
 def delete_recipe_ingredient():
+    """
+    Deletes a recipe-ingredient for one of a user's existing recipes. Can only
+    be used by the creator of the recipe.
+    """
+
     recipe_id = request.json.get('recipe_id')
     recipe_ingredient_id = request.json.get('recipe_ingredient_id') 
 
@@ -136,6 +163,12 @@ def delete_recipe_ingredient():
 @action('set_recipe_tag', method=["POST"])
 @action.uses(url_signer.verify(), db)
 def set_recipe_tag():
+    """
+    Sets a recipe-tag to a new value, inserting or reusing existing tags as
+    necessary. Can be used by any logged-in user, not only the creator of the
+    recipe, in order to promote collaborative recipe categorization.
+    """
+
     recipe_id = request.json.get('recipe_id')
     tag_name = request.json.get('tag_name')
 
@@ -240,6 +273,11 @@ def profile():
 @action('load_recipes')
 @action.uses(url_signer.verify(), db)
 def load_recipes():
+    """
+    Loads a user's recipes and their recipes' ingredients lists. Sent to
+    and displayed by the profile page when it initializes.
+    """
+
     rows = db(db.recipes.m_email == get_user_email()
         ).select(orderby=~db.recipes.id).as_list()
     
@@ -264,6 +302,11 @@ def load_recipes():
 @action('load_shared_recipes')
 @action.uses(db)
 def load_shared_recipes():
+    """
+    Loads shared recipes across all users, along with their ingredients and 
+    tags. Sent to and displayed bt the main discover page when it initializes.
+    """
+
     rows = get_shared_recipes()
     tags = db(db.tags).select().as_list()
 
@@ -275,6 +318,11 @@ def load_shared_recipes():
 @action('add_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def add_recipe():
+    """
+    Adds a recipe for a particular user, inserting both the one-to-one (recipe 
+    table) data and the many-to-many (recipe ingredients table) data as needed.
+    """
+
     recipe_id = db.recipes.insert(
         name=request.json.get('name'),
         steps=request.json.get('steps'),
@@ -310,6 +358,10 @@ def add_recipe():
 @action('delete_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def delete_recipe():
+    """
+    Deletes a recipe entirely (which then cascades to delete the corresponding
+    recipe-ingredients automatically). Can only be used by the recipe creator.
+    """
     recipe_id = request.json.get('id')
 
     if get_user_email() != db.recipes[recipe_id].m_email:
@@ -323,6 +375,13 @@ def delete_recipe():
 @action('edit_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
 def edit_recipe():
+    """
+    Edits one of a recipe's one-to-one fields. For example, the recipe name,
+    preparation steps, and cook time, as well as others. Can only be used by the
+    recipe creator. Does not allow editing recipe ingredients, which is instead
+    handled by set_recipe_ingredient().
+    """
+
     recipe_id = request.json.get("id")
     field = request.json.get("field")
     value = request.json.get("value")
@@ -400,7 +459,9 @@ def get_shared_recipes(search_term='', search_tags=[]):
 @action('update_rating', method="POST")
 @action.uses(url_signer.verify(), db, auth.user)
 def update_rating():
-    """Sets the rating for a recipe"""
+    """
+    Sets the 1-to-5 star rating for a recipe for a single user.
+    """
 
     row_id = request.json.get('row_id')
     rating = request.json.get('rating')
