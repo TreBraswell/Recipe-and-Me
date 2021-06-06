@@ -42,17 +42,20 @@ url_signer = URLSigner(session)
 @action('search_recipes')
 @action.uses(db)
 def search_recipes():
-    q = request.params.get("q")
-    t = request.params.get("t")
-    t = [] if t is None or t == '' else t.split(',')
-    rows = get_shared_recipes(q, t)
+    query = request.params.get("q")
+    tag = request.params.get("t")
+    tag = [] if tag is None or tag == '' else tag.split(',')
+    rows = get_shared_recipes(query, tag)
+
     return dict(rows=rows)
 
 @action('search_ingredients')
 @action.uses(db)
 def search_ingredients():
-    q = request.params.get("q")
-    ingredients = db(db.ingredients.name.like(f'%{q}%')).select(orderby=db.ingredients.name).as_list()
+    query = request.params.get("q")
+    ingredients = db(db.ingredients.name.like(f'%{query}%')
+        ).select(orderby=db.ingredients.name).as_list()
+
     return dict(ingredients=ingredients)
 
 @action('get_recipe_ingredients/<recipe_id>', method="GET")
@@ -62,12 +65,13 @@ def get_recipe_ingredients(recipe_id):
     rows = db((db.recipe_ingredients.recipe == recipe_id) &
         (db.recipe_ingredients.ingredient == db.ingredients.id)
         ).select(db.ingredients.name, db.recipe_ingredients.quantity).as_list()
+
     return dict(rows=rows)
 
 @action('set_recipe_ingredient', method=["POST"])
 @action.uses(url_signer.verify(), db)
 def set_recipe_ingredient():
-    recipe_id =request.json.get('recipe_id')
+    recipe_id = request.json.get('recipe_id')
     recipe_ingredient_id = request.json.get('recipe_ingredient_id')
     ingredient_name = request.json.get('ingredient_name')
     quantity = request.json.get('quantity')
@@ -75,9 +79,6 @@ def set_recipe_ingredient():
     if get_user_email() != db.recipes[recipe_id].m_email:
         return "Access denied"
     
-    return update_or_insert_recipe_ingredient(recipe_id, recipe_ingredient_id, ingredient_name, quantity)
-
-def update_or_insert_recipe_ingredient(recipe_id, recipe_ingredients_id, ingredient_name, quantity):
     # get ID of existing ingredient row in ingredients table, or insert a new row for the ingredient
     ingredient = db(db.ingredients.name == ingredient_name).select(db.ingredients.id).first()
     ingredient_id = ingredient.id if ingredient is not None else None
@@ -93,6 +94,7 @@ def update_or_insert_recipe_ingredient(recipe_id, recipe_ingredients_id, ingredi
             recipe=recipe_id,
             ingredient=ingredient_id,
             quantity=quantity)
+
         response = "ok"
     else:
         # otherwise, update or insert a recipe_ingredients entry with an unknown id
@@ -102,7 +104,9 @@ def update_or_insert_recipe_ingredient(recipe_id, recipe_ingredients_id, ingredi
             ingredient=ingredient_id, 
             quantity=quantity)
         
-        recipe_ingredient_id = db(((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id))).select().first().id
+        recipe_ingredient_id = db(
+            ((db.recipe_ingredients.recipe == recipe_id) & (db.recipe_ingredients.ingredient == ingredient_id))
+            ).select().first().id
 
     return recipe_ingredients_id
 
@@ -120,27 +124,67 @@ def delete_recipe_ingredient():
 
     return "ok"
 
+@action('set_recipe_tag', method=["POST"])
+@action.uses(url_signer.verify(), db)
+def set_recipe_tag():
+    recipe_id = request.json.get('recipe_id')
+    tag_name = request.json.get('tag_name')
+
+    # get ID of existing tag row in tags table, or insert a new row for the tag
+    tag = db(db.tags.name == tag_name).select(db.tags.id).first()
+    tag_id = tag.id if tag is not None else None
+
+    if tag_id is None:
+        tag_id = db.tags.insert(name=tag_name)
+    recipe_tag = db(
+        (db.recipe_tags.recipe == recipe_id) & (db.recipe_tags.tag == tag_id)
+        ).select(db.recipe_tags.id).first()
+    if recipe_tag is not None:
+        return None
+    
+    db.recipe_tags.insert(recipe=recipe_id, tag=tag_id)
+
+    return dict(ok="ok")
+
+@action('delete_recipe_tag', method="POST")
+@action.uses(url_signer.verify(), db)
+def delete_tag():
+    recipe_id = request.json.get('recipe_id')
+    tag_name = request.json.get('tag_name')
+
+    # get ID of existing tag row in tags table
+    tag = db(db.tags.name == tag_name).select(db.tags.id).first()
+    tag_id = tag.id if tag is not None else None
+
+    # delete recipe tags row matching this recipe and tag
+    db((db.recipe_tags.recipe == recipe_id) & (db.recipe_tags.tag == tag_id)).delete()
+
+    return "ok"
+
 @action('index')
 def index_redirect():
     redirect(URL(''))
 
 @action('')  # aka Discover
-@action.uses(db, auth, 'index.html', 'layout.html')
+@action.uses(db, auth, 'index.html')
 def index():
     rows = get_shared_recipes()
     current_user = get_user()
+
     return dict(
         rows=rows,
         url_signer=url_signer,
+        current_user = current_user,
         search_url = URL('search_recipes', signer=url_signer),
         load_shared_recipes_url = URL('load_shared_recipes'),
-        update_rating_url = URL ('update_rating', signer=url_signer ),
-        current_user = current_user,
+        update_rating_url = URL('update_rating', signer=url_signer),
+        set_recipe_tag_url = URL('set_recipe_tag', signer=url_signer),
+        delete_recipe_tag_url = URL('delete_recipe_tag', signer=url_signer),
     )
 
 
 @action('profile', method=["GET", "POST"])
-@action.uses(db, session, auth.user, 'profile.html', 'layout.html', 'auth.html')
+@action.uses(db, session, auth.user, 'profile.html')
 def profile():
 
     user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
@@ -190,8 +234,13 @@ def load_recipes():
         toret =[]
         recipe_ingredients = db(db.recipe_ingredients.recipe == row["id"]).select().as_list()
         for temp in recipe_ingredients:
-            toret.append({"amount": temp["quantity"], "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name, 'id': temp["id"]})
+            toret.append({
+                "amount": temp["quantity"], 
+                "ingredient": db(db.ingredients.id == temp["ingredient"]).select().first().name, 
+                "id": temp["id"]}
+            )
         row["myingredients"] = toret
+
     return dict(rows=rows)
 
 @action('load_shared_recipes')
@@ -199,10 +248,11 @@ def load_recipes():
 def load_shared_recipes():
     rows = get_shared_recipes()
     tags = db(db.tags).select().as_list()
+
     for tag in tags:
         tag = dict(name=tag, is_active=False)
-    current_user = get_user() 
-    return dict(rows=rows, tags=tags, current_user = current_user)
+    
+    return dict(rows=rows, tags=tags)
 
 @action('add_recipe', method="POST")
 @action.uses(url_signer.verify(), db)
@@ -214,7 +264,7 @@ def add_recipe():
         shared=request.json.get('shared'),
         image_url=request.json.get('image_url'),
     )
-    finaltemp = []
+
     myingredients1 = request.json.get('ingredients')
     
     for temp in myingredients1: 
@@ -234,6 +284,7 @@ def delete_recipe():
     id = request.json.get('id')
     assert id is not None
     db(db.recipes.id == id).delete()
+
     return "ok"
 
 @action('edit_recipe', method="POST")
@@ -292,8 +343,7 @@ def get_shared_recipes(search_term='', search_tags=[]):
                 row["ingredients_rows"].append(ingredient)
         row["ingredients"] = s
         
-        
-         # create rating fields
+        # create rating fields
         ratings =  db(( db.rating.recipe == row['id'] )).select()
         row["total_rating"] = 0
         row ["raters"] = []
@@ -301,7 +351,6 @@ def get_shared_recipes(search_term='', search_tags=[]):
             for rating in ratings:
                 row["total_rating"] =row["total_rating"] + rating["rating"]
                 row["raters"].append(rating["user"])
-        
         
         # create tags string
         tag_rows = db((db.recipe_tags.recipe == row['id'])).select()
@@ -333,7 +382,8 @@ def get_shared_recipes(search_term='', search_tags=[]):
 @action('update_rating', method="POST")
 @action.uses(url_signer.verify(), db, auth.user)
 def update_rating():
-    """Sets the rating for an image."""
+    """Sets the rating for a recipe"""
+
     row_id = request.json.get('row_id')
     rating = request.json.get('rating')
     assert row_id is not None and rating is not None

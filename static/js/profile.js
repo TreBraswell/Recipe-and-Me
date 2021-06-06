@@ -253,8 +253,8 @@ let init = (app) => {
     // We form the dictionary of all methods, so we can assign them
     // to the Vue app in a single blow.
     app.methods = {
-        add_recipe: app.add_recipe,
         set_add_status: app.set_add_status,
+        add_recipe: app.add_recipe,
         delete_recipe: app.delete_recipe,
 
         start_edit_ingredient: app.start_edit_ingredient,
@@ -300,6 +300,5 @@ let init = (app) => {
     app.init();
 };
 
-// This takes the (empty) app object, and initializes it,
-// putting all the code i
+// This takes the (empty) app object, and initializes it
 init(app);

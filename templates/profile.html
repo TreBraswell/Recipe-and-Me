@@ -307,9 +307,10 @@
                                 </div>
                             </div>
                     </div>
+
                     <!-- Autocomplete datalist-->
                     <datalist id="search_ingredients_results">
-                        <option v-for="s in all_ingredients" v-bind:value="s.name">{{s.name}}</option>
+                        <option v-for="s in all_ingredients" :value="s.name">{{s.name}}</option>
                     </datalist>
             </div>
         </div>

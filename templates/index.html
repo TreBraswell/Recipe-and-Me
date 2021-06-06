@@ -79,6 +79,8 @@
     <!-- Main content area: recipe list for browsing and search results -->
     <div class="tile is-ancestor is-flex-wrap-wrap">
         <div v-for="recipe in recipes" class="tile is-parent is-4">
+
+            <!-- Recipe card -->
             <div class="tile is-child card" @click="set_modal(true , recipe._idx)">
                 <header class="card-header">
                     <p class="card-header-title is-centered">
@@ -103,7 +105,9 @@
                     </div>
                 </div> 
             </div>
-            <div v-if="modals[recipe._idx]" class="modal is-active">
+
+            <!-- Recipe modal pop-up with more details -->
+            <div v-if="recipes[recipe._idx].modal" class="modal is-active">
                 <div class="modal-background" @click.stop="set_modal(false, recipe._idx)"></div>
                     <div class="modal-card">
                         <header class="modal-card-head">
@@ -111,7 +115,11 @@
                         </header>
                         <section class="modal-card-body">
                             <div class="columns is-mobile-reversed">
+
+                                <!-- Left sidebar: ingredients, tags, cook time-->
                                 <div class="column is-one-third ">
+                                    
+                                    <!-- Ingredients detail view -->
                                     <p class="is-size-5">Ingredients</p>
                                     <div>
                                         <div class="notification p-1 m-1" v-for="ingredient in recipe['ingredients_rows']">
@@ -120,19 +128,36 @@
                                             <span class="is-size-7">{{ingredient['quantity']}}</span>
                                         </div>
                                     </div>
+
+                                    <!-- Tags detail view -->
                                     <p class="is-size-5">Tags</p>
                                     <div class="tags">
                                         <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in recipe['tag_rows']">
                                             {{tag}}
+                                            <button class="delete is-small" @click="delete_tag(recipe._idx, tag)"></button>
                                         </span>
+                                        <div class="form">
+                                            <div class="field has-addons">
+                                                <div class="control">
+                                                    <input type="text" class="input is-primary is-small is-rounded" v-model="recipe.temp_tag" list="search_tags_results" placeholder="Add a new tag ..."></input>
+                                                </div>
+                                                <div class="control">
+                                                    <button class="button is-primary is-small is-rounded" @click="add_tag(recipe._idx)">
+                                                        <span class="icon is-small"><i class="fa fa-fw fa-plus"></i></span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    
                                     <p class="is-size-5">Prep Time</p>
                                     <p>
                                         <span class="icon"><i class="fa fa-fw fa-clock-o"></i></span>
-                                        
                                         {{recipe['cook_time']}} min
                                     </p>
                                 </div>
+
+                                <!-- Right side: star ratings and image -->
                                 <div class="column">
 
                                     <!-- Star area -->
@@ -184,18 +209,24 @@
                         </footer> -->
                     </div>
                     <button class="modal-close is-large"  aria-label="close" @click.stop="set_modal(false, recipe._idx)"></button>
+                </div>
             </div>
         </div>
-    </div>
-    </div>
+    <!-- Autocomplete datalist-->
+    <datalist id="search_tags_results">
+        <option v-for="tag in tags" :value="tag.name">{{tag.name}}</option>
+    </datalist>
 </div>
 
 <!-- Loads the index-specific js for Vue -->
 [[block page_scripts]]
 <script>
-  let search_url = "[[=XML(search_url)]]";
-  let load_shared_recipes_url = "[[=XML(load_shared_recipes_url)]]"
-  let update_rating_url = "[[=XML(update_rating_url)]]"
+    let current_user = "[[=XML(current_user)]]";
+    let search_url = "[[=XML(search_url)]]";
+    let load_shared_recipes_url = "[[=XML(load_shared_recipes_url)]]";
+    let update_rating_url = "[[=XML(update_rating_url)]]";
+    let set_recipe_tag_url = "[[=URL('set_recipe_tag', signer=url_signer)]]";
+    let delete_recipe_tag_url = "[[=URL('delete_recipe_tag', signer=url_signer)]]";
 </script>
 <script src="js/index.js"></script>
 [[end]]
