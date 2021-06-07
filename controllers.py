@@ -51,6 +51,7 @@ def search_recipes():
 
     query = request.params.get("q")
     tag = request.params.get("t")
+
     tag = [] if tag is None or tag == '' else tag.split(',')
     rows = get_shared_recipes(query, tag)
 
@@ -66,6 +67,7 @@ def search_ingredients():
     """
 
     query = request.params.get("q")
+
     ingredients = db(db.ingredients.name.like(f'%{query}%')
         ).select(orderby=db.ingredients.name).as_list()
 
@@ -211,6 +213,10 @@ def index_redirect():
 @action('')  # aka Discover
 @action.uses(db, auth, 'index.html')
 def index():
+    """
+    Returns the index page, also known as the discover page.
+    """
+
     rows = get_shared_recipes()
     current_user = get_user()
 
@@ -229,6 +235,10 @@ def index():
 @action('profile', method=["GET", "POST"])
 @action.uses(db, session, auth.user, 'profile.html')
 def profile():
+    """
+    Returns the user profile page on GET, and updates user profile information
+    on POST.
+    """
 
     user = db(db.auth_user.email == get_user_email()).select().as_list()[0]
     myrecipes = db(db.recipes.m_email == get_user_email()).select()
@@ -398,7 +408,16 @@ def edit_recipe():
 def get_shared_recipes(search_term='', search_tags=[]):
     rows = db((db.recipes.shared == True) & 
         (db.recipes.name.like(f'%{search_term}%'))
-        ).select(orderby=~db.recipes.id).as_list()
+        ).select(db.recipes.ALL, orderby=~db.recipes.id)
+
+    rows_ingredient_match = db((db.recipes.shared == True) & 
+        (db.recipe_ingredients.recipe == db.recipes.id) &
+        (db.recipe_ingredients.ingredient == db.ingredients.id) &
+        (db.ingredients.name.like(f'%{search_term}%'))
+        ).select(db.recipes.ALL, orderby=~db.recipes.id, distinct=True)
+
+    rows = rows | rows_ingredient_match
+    rows = sorted(rows.as_list(), key=lambda x: -x['id'])
 
     for row in reversed(rows):
         # create ingredients string
