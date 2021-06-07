@@ -30,7 +30,10 @@ let init = (app) => {
         recipes.map((recipe) => {
             recipe.rating = 0;
             recipe.num_stars_display = 0;
-            recipe.image_url = recipe.image_url != "" ? recipe.image_url : "https://bulma.io/images/placeholders/1280x960.png";
+            recipe.image_url = 
+                    (recipe.image_url != "")
+                    ? recipe.image_url 
+                    : "https://bulma.io/images/placeholders/1280x960.png";
             recipe.modal = false;
             recipe.temp_tag = "";
         });
@@ -40,21 +43,26 @@ let init = (app) => {
                 recipes[i].rating = 0;
             }
             else{
-                recipes[i].rating = recipes[i].total_rating/(recipes[i].raters.length);
+                recipes[i].rating = 
+                        recipes[i].total_rating/(recipes[i].raters.length);
                 recipes[i].num_stars_display = recipes[i].rating;
             }
         }
     };
     
     app.set_stars = (recipe_idx, num_stars) => {
-        if (!app.vue.recipes[recipe_idx].raters.includes(app.vue.user) && (current_user != null)){
+        if (!app.vue.recipes[recipe_idx].raters.includes(app.vue.user) && 
+                (current_user != null)) {
             let recipe = app.vue.recipes[recipe_idx];
             recipe.total_rating = recipe.total_rating + num_stars;
             recipe.raters.push(app.vue.user);
             recipe.rating = (recipe.total_rating)/(recipe.raters.length);
 
             // Sets the stars on the server.
-            axios.post(update_rating_url, {row_id: recipe.id, rating: num_stars});
+            axios.post(
+                update_rating_url,
+                {row_id: recipe.id, rating: num_stars}
+            );
         }
     };
     
@@ -64,7 +72,8 @@ let init = (app) => {
     };
 
     app.stars_over = (recipe_idx, num_stars) => {
-        if (!app.vue.recipes[recipe_idx].raters.includes(app.vue.user) && (app.vue.user!= -1)){
+        if (!app.vue.recipes[recipe_idx].raters.includes(app.vue.user) && 
+                (current_user != null)) {
             let recipe = app.vue.recipes[recipe_idx];
             recipe.num_stars_display = num_stars;
         }
@@ -72,8 +81,11 @@ let init = (app) => {
     
     app.search = function () {
         if (app.vue.query.length > 0 || app.vue.query_tags.length > 0) {
-            axios.get(search_url, {params: {q: app.vue.query, t: app.vue.query_tags.map(e => e.name).join(',')}})
-                .then(function (result) {
+            axios.get(
+                    search_url, {params: {
+                        q: app.vue.query, 
+                        t: app.vue.query_tags.map(e => e.name).join(','),
+                }}).then(function (result) {
                     let recipes = result.data.rows;
                     app.enumerate(recipes);
                     app.complete(recipes);
@@ -81,7 +93,8 @@ let init = (app) => {
                 });
         }
         else {
-            // reset the recipe rows displayed to be everything after we clear out the search bar
+            // reset the recipe rows displayed to be ...
+            // everything, after we've clear out the search bar
             app.vue.recipes = app.vue.recipes_data;
         }
     }
@@ -104,7 +117,8 @@ let init = (app) => {
     app.remove_search_tag = function (index) {
         app.vue.tags[index].is_active = false;
         app.vue.tags = app.enumerate(app.vue.tags);
-        result = app.remove_from_array(app.vue.query_tags, app.vue.tags[index].name);
+        result = app.remove_from_array(
+                app.vue.query_tags, app.vue.tags[index].name);
 
         app.search();
         
@@ -148,7 +162,8 @@ let init = (app) => {
                 recipe_id: recipe.id,
                 tag_name: tag_name,
             }).then(function () {
-                let tag_idx = app.vue.recipes[recipe_idx].tag_rows.indexOf(tag_name);
+                let tag_idx =
+                        app.vue.recipes[recipe_idx].tag_rows.indexOf(tag_name);
                 Vue.delete(app.vue.recipes[recipe_idx].tag_rows, tag_idx);
         });
     }
@@ -186,7 +201,10 @@ let init = (app) => {
             app.vue.recipes = recipes;
             
             app.vue.recipes_data = app.vue.recipes;
-            app.vue.tags = response.data.tags ? app.enumerate(response.data.tags) : []
+            app.vue.tags = 
+                    (response.data.tags)
+                    ? app.enumerate(response.data.tags) 
+                    : []
         });
     };
 
