@@ -134,8 +134,11 @@
                   <div class="tags">
                     <span class="tag is-rounded is-medium is-capitalized is-primary is-light" v-for="tag in recipe['tag_rows']">
                       {{tag}}
+                      [[if globals().get('user'):]]
                       <button class="delete is-small" @click="delete_tag(recipe._idx, tag)"></button>
+                      [[pass]]
                     </span>
+                    [[if globals().get('user'):]]
                     <div class="form">
                       <div class="field has-addons">
                         <div class="control">
@@ -148,6 +151,7 @@
                         </div>
                       </div>
                     </div>
+                    [[pass]]
                   </div>
                   
                   <p class="is-size-5">Prep Time</p>
