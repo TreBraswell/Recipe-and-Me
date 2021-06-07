@@ -80,10 +80,11 @@ let init = (app) => {
             amount: app.vue.add_amount,
             ingredient: app.vue.add_ingredient,
         }
-        temp_ingredient = app.decorate_ingredients(temp_ingredient);
 
         app.vue.temp_ingredients.push(temp_ingredient);
-        app.enumerate(app.vue.temp_ingredients);
+        app.vue.temp_ingredients = 
+                app.decorate_ingredients(
+                        app.enumerate(app.vue.temp_ingredients));
         app.reset_temp_ingredient_form();
     };
 
