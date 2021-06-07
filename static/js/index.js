@@ -51,11 +51,11 @@ let init = (app) => {
     };
     
     app.set_stars = (recipe_idx, num_stars) => {
-        if (!app.vue.recipes[recipe_idx].raters.includes(app.vue.user) && 
+        if (!app.vue.recipes[recipe_idx].raters.includes(current_user) && 
                 (current_user != null)) {
             let recipe = app.vue.recipes[recipe_idx];
             recipe.total_rating = recipe.total_rating + num_stars;
-            recipe.raters.push(app.vue.user);
+            recipe.raters.push(current_user);
             recipe.rating = (recipe.total_rating)/(recipe.raters.length);
 
             // Sets the stars on the server.
@@ -72,7 +72,7 @@ let init = (app) => {
     };
 
     app.stars_over = (recipe_idx, num_stars) => {
-        if (!app.vue.recipes[recipe_idx].raters.includes(app.vue.user) && 
+        if (!app.vue.recipes[recipe_idx].raters.includes(current_user) && 
                 (current_user != null)) {
             let recipe = app.vue.recipes[recipe_idx];
             recipe.num_stars_display = num_stars;
