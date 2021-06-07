@@ -225,7 +225,8 @@
 <!-- Loads the index-specific js for Vue -->
 [[block page_scripts]]
 <script>
-  let current_user = "[[=XML(current_user)]]";
+  let current_user = parseInt("[[current_user]]");
+  if (current_user == NaN) current_user = null;
   let search_url = "[[=XML(search_url)]]";
   let load_shared_recipes_url = "[[=XML(load_shared_recipes_url)]]";
   let update_rating_url = "[[=URL('update_rating', signer=url_signer)]]";

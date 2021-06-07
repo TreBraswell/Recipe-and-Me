@@ -448,10 +448,12 @@ def get_shared_recipes(search_term='', search_tags=[]):
         ratings =  db(( db.rating.recipe == row['id'] )).select()
         row["total_rating"] = 0
         row ["raters"] = []
+        row["ratings"] = []
         if len(ratings)!= 0:
             for rating in ratings:
-                row["total_rating"] =row["total_rating"] + rating["rating"]
+                row["total_rating"] = row["total_rating"] + rating["rating"] 
                 row["raters"].append(rating["user"])
+                row["ratings"].append(rating["rating"])
         
         # create tags string
         tag_rows = db((db.recipe_tags.recipe == row['id'])).select()

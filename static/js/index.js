@@ -43,9 +43,15 @@ let init = (app) => {
                 recipes[i].rating = 0;
             }
             else{
-                recipes[i].rating = 
-                        recipes[i].total_rating/(recipes[i].raters.length);
-                recipes[i].num_stars_display = recipes[i].rating;
+                rating_i = recipes[i].raters.indexOf(current_user);
+                let rating = 0;
+                
+                if (rating_i !== -1) {
+                    rating = recipes[i].ratings[rating_i];
+                }
+
+                recipes[i].rating = rating;
+                recipes[i].num_stars_display = rating;
             }
         }
     };
