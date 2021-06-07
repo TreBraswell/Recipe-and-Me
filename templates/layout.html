@@ -90,7 +90,12 @@
 </body>
 <script src="js/sugar.min.js"></script>
 <script src="js/axios.min.js"></script>
+[[import os]]
+[[if os.environ.get("GAE_ENV"):]]
+<script src="js/vue.min.js"></script>
+[[else:]]
 <script src="js/vue.js"></script>
+[[pass]]
 <script src="js/utils.js"></script>
 [[block page_scripts]]
 <!-- individual pages can add scripts here -->[[end]]
